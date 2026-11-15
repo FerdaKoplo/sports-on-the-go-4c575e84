@@ -33,16 +33,15 @@ const App = () => {
   // Enable mobile viewport optimization
   useMobileViewport();
   useScrollLockCleanup();
-  
+
   return (
-  <QueryClientProvider client={queryClient}>
-    <HelmetProvider>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
               <TermsVersionChecker>
                 <div className="min-h-screen">
                   <Routes>
@@ -66,12 +65,11 @@ const App = () => {
                   </Routes>
                 </div>
               </TermsVersionChecker>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </HelmetProvider>
-  </QueryClientProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </HelmetProvider>
+    </QueryClientProvider>
   );
 };
 

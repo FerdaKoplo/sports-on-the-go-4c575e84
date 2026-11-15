@@ -3,16 +3,34 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Mail, Lock, User, ArrowLeft, CalendarIcon, AlertTriangle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  MapPin,
+  Mail,
+  Lock,
+  User,
+  ArrowLeft,
+  CalendarIcon,
+  AlertTriangle,
+} from "lucide-react";
 import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/stores/AuthStore";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -20,19 +38,28 @@ const signInSchema = z.object({
 });
 
 const signUpSchema = z.object({
-  username: z.string()
+  username: z
+    .string()
     .min(3, "Username must be at least 3 characters")
     .max(20, "Username must be less than 20 characters")
-    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      "Username can only contain letters, numbers, and underscores",
+    ),
   email: z.string().email("Invalid email address"),
-  password: z.string()
+  password: z
+    .string()
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+    .regex(
+      /[^A-Za-z0-9]/,
+      "Password must contain at least one special character",
+    ),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   agreeToTerms: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the Terms, Privacy Policy, and all legal provisions to create an account",
+    message:
+      "You must agree to the Terms, Privacy Policy, and all legal provisions to create an account",
   }),
 });
 
@@ -51,8 +78,8 @@ const Auth = () => {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      email: formData.get('signin-email') as string,
-      password: formData.get('signin-password') as string,
+      email: formData.get("signin-email") as string,
+      password: formData.get("signin-password") as string,
     };
 
     try {
@@ -80,10 +107,10 @@ const Auth = () => {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      username: formData.get('username') as string,
-      email: formData.get('signup-email') as string,
-      password: formData.get('signup-password') as string,
-      dateOfBirth: dateOfBirth ? format(dateOfBirth, 'yyyy-MM-dd') : '',
+      username: formData.get("username") as string,
+      email: formData.get("signup-email") as string,
+      password: formData.get("signup-password") as string,
+      dateOfBirth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : "",
       agreeToTerms: agreeToTerms,
     };
 
@@ -111,8 +138,8 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center px-4 py-12">
       {/* Back Button */}
-      <Link 
-        to="/" 
+      <Link
+        to="/"
         className="fixed top-6 left-6 flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-smooth"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -126,7 +153,9 @@ const Auth = () => {
               <MapPin className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </div>
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-black text-center">Welcome to SquadUp</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-black text-center">
+            Welcome to SquadUp
+          </CardTitle>
           <CardDescription className="text-center text-sm">
             Sign in to discover games or create your account
           </CardDescription>
@@ -134,24 +163,40 @@ const Auth = () => {
         <CardContent className="px-4 sm:px-6">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4 h-9 sm:h-10">
-              <TabsTrigger value="signin" className="text-xs sm:text-sm px-2">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" className="text-xs sm:text-sm px-2">Sign Up</TabsTrigger>
+              <TabsTrigger value="signin" className="text-xs sm:text-sm px-2">
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger value="signup" className="text-xs sm:text-sm px-2">
+                Sign Up
+              </TabsTrigger>
             </TabsList>
 
             {/* Sign In Tab */}
             <TabsContent value="signin">
               <div className="space-y-4 mb-4">
-                <Button 
+                <Button
                   type="button"
                   variant="outline"
                   className="w-full"
                   onClick={signInWithGoogle}
                 >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    <path
+                      fill="currentColor"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
                   </svg>
                   Continue with Google
                 </Button>
@@ -160,7 +205,9 @@ const Auth = () => {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
                   </div>
                 </div>
               </div>
@@ -178,7 +225,9 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -195,10 +244,14 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                  {errors.password && (
+                    <p className="text-sm text-destructive">
+                      {errors.password}
+                    </p>
+                  )}
                 </div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full gradient-primary text-white shadow-primary hover:opacity-90"
                   disabled={isLoading}
                 >
@@ -210,17 +263,29 @@ const Auth = () => {
             {/* Sign Up Tab */}
             <TabsContent value="signup">
               <div className="space-y-4 mb-4">
-                <Button 
+                <Button
                   type="button"
                   variant="outline"
                   className="w-full"
                   onClick={signInWithGoogle}
                 >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    <path
+                      fill="currentColor"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
                   </svg>
                   Continue with Google
                 </Button>
@@ -229,7 +294,9 @@ const Auth = () => {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
                   </div>
                 </div>
               </div>
@@ -250,8 +317,14 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
-                  <p className="text-xs text-muted-foreground">3-20 characters, letters, numbers, and underscores only</p>
+                  {errors.username && (
+                    <p className="text-sm text-destructive">
+                      {errors.username}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    3-20 characters, letters, numbers, and underscores only
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
@@ -266,7 +339,9 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -281,97 +356,141 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+                  {errors.password && (
+                    <p className="text-xs text-destructive">
+                      {errors.password}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dob" className="text-sm">Date of Birth</Label>
+                  <Label htmlFor="dob" className="text-sm">
+                    Date of Birth
+                  </Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal pl-10 h-10 text-sm relative",
-                        !dateOfBirth && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
-                      {dateOfBirth ? format(dateOfBirth, "PPP") : <span>Pick a date</span>}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal pl-10 h-10 text-sm relative",
+                          !dateOfBirth && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
+                        {dateOfBirth ? (
+                          format(dateOfBirth, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-background z-50" align="start">
+                    <PopoverContent
+                      className="w-auto p-0 bg-background z-50"
+                      align="start"
+                    >
                       <Calendar
                         mode="single"
                         selected={dateOfBirth}
                         onSelect={setDateOfBirth}
                         disabled={(date) =>
-                          date > new Date(Date.now() - 567648000000) || date < new Date("1900-01-01")
+                          date > new Date(Date.now() - 567648000000) ||
+                          date < new Date("1900-01-01")
                         }
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
-                  {errors.dateOfBirth && <p className="text-xs text-destructive">{errors.dateOfBirth}</p>}
-                </div>
-
-            {/* Legal Consent Checkbox - MANDATORY */}
-            <div className="space-y-3 border-2 border-destructive/20 rounded-lg p-3 sm:p-4 bg-destructive/5">
-              <div className="flex items-start space-x-2 sm:space-x-3">
-                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-destructive flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-xs sm:text-sm font-semibold text-foreground mb-1 sm:mb-2">
-                    IMPORTANT LEGAL AGREEMENT
-                  </p>
-                  <p className="text-xs text-muted-foreground mb-2 sm:mb-3">
-                    By creating an account, you are entering into a legally binding agreement. Please read carefully:
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-2 sm:space-x-3">
-                <Checkbox
-                  id="agree-terms"
-                  checked={agreeToTerms}
-                  onCheckedChange={(checked) => setAgreeToTerms(checked === true)}
-                  className="mt-0.5 sm:mt-1 flex-shrink-0"
-                />
-                <div className="flex-1">
-                  <Label
-                    htmlFor="agree-terms"
-                    className="text-xs leading-relaxed cursor-pointer font-normal"
-                  >
-                    I have read, understand, and agree to be legally bound by the{" "}
-                    <Link to="/terms" target="_blank" className="text-primary font-semibold underline hover:text-primary/80">
-                      Terms and Conditions
-                    </Link>
-                    {" "}and{" "}
-                    <Link to="/privacy" target="_blank" className="text-primary font-semibold underline hover:text-primary/80">
-                      Privacy Policy
-                    </Link>
-                    , including:
-                    <ul className="list-disc pl-4 sm:pl-5 mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1 text-muted-foreground">
-                      <li className="text-xs"><strong className="text-foreground">Assumption of all risks</strong> of injury, disability, or death from sports activities</li>
-                      <li className="text-xs"><strong className="text-foreground">Release of all claims</strong> against the operator and waiver of right to sue</li>
-                    </ul>
-                  </Label>
-                  {errors.agreeToTerms && (
-                    <p className="text-xs text-destructive mt-2 font-semibold">
-                      {errors.agreeToTerms}
+                  {errors.dateOfBirth && (
+                    <p className="text-xs text-destructive">
+                      {errors.dateOfBirth}
                     </p>
                   )}
                 </div>
-              </div>
-            </div>
 
-                <Button 
-                  type="submit" 
+                {/* Legal Consent Checkbox - MANDATORY */}
+                <div className="space-y-3 border-2 border-destructive/20 rounded-lg p-3 sm:p-4 bg-destructive/5">
+                  <div className="flex items-start space-x-2 sm:space-x-3">
+                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs sm:text-sm font-semibold text-foreground mb-1 sm:mb-2">
+                        IMPORTANT LEGAL AGREEMENT
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-2 sm:mb-3">
+                        By creating an account, you are entering into a legally
+                        binding agreement. Please read carefully:
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-2 sm:space-x-3">
+                    <Checkbox
+                      id="agree-terms"
+                      checked={agreeToTerms}
+                      onCheckedChange={(checked) =>
+                        setAgreeToTerms(checked === true)
+                      }
+                      className="mt-0.5 sm:mt-1 flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor="agree-terms"
+                        className="text-xs leading-relaxed cursor-pointer font-normal"
+                      >
+                        I have read, understand, and agree to be legally bound
+                        by the{" "}
+                        <Link
+                          to="/terms"
+                          target="_blank"
+                          className="text-primary font-semibold underline hover:text-primary/80"
+                        >
+                          Terms and Conditions
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                          to="/privacy"
+                          target="_blank"
+                          className="text-primary font-semibold underline hover:text-primary/80"
+                        >
+                          Privacy Policy
+                        </Link>
+                        , including:
+                        <ul className="list-disc pl-4 sm:pl-5 mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1 text-muted-foreground">
+                          <li className="text-xs">
+                            <strong className="text-foreground">
+                              Assumption of all risks
+                            </strong>{" "}
+                            of injury, disability, or death from sports
+                            activities
+                          </li>
+                          <li className="text-xs">
+                            <strong className="text-foreground">
+                              Release of all claims
+                            </strong>{" "}
+                            against the operator and waiver of right to sue
+                          </li>
+                        </ul>
+                      </Label>
+                      {errors.agreeToTerms && (
+                        <p className="text-xs text-destructive mt-2 font-semibold">
+                          {errors.agreeToTerms}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
                   className="w-full gradient-primary text-white shadow-primary hover:opacity-90"
                   disabled={isLoading || !agreeToTerms}
                 >
-                  {isLoading ? "Creating account..." : "I Agree - Create Account"}
+                  {isLoading
+                    ? "Creating account..."
+                    : "I Agree - Create Account"}
                 </Button>
-                
+
                 <p className="text-xs text-center text-muted-foreground">
-                  By clicking "Create Account", you confirm that you have read and agreed to all legal provisions above
+                  By clicking "Create Account", you confirm that you have read
+                  and agreed to all legal provisions above
                 </p>
               </form>
             </TabsContent>
