@@ -1,13 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/stores/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Trash2, AlertTriangle } from "lucide-react";
@@ -29,32 +45,37 @@ const Settings = () => {
 
     try {
       // Call the edge function to delete the account
-      const { data, error } = await supabase.functions.invoke('delete-user-account', {
-        method: 'POST',
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "delete-user-account",
+        {
+          method: "POST",
+        },
+      );
 
       if (error) throw error;
 
       // Sign out and redirect to home
       await signOut();
       toast.success("Your account has been deleted successfully");
-      navigate('/');
+      navigate("/");
     } catch (error: any) {
-      console.error('Error deleting account:', error);
-      toast.error(error.message || "Failed to delete account. Please try again.");
+      console.error("Error deleting account:", error);
+      toast.error(
+        error.message || "Failed to delete account. Please try again.",
+      );
     } finally {
       setIsDeleting(false);
     }
   };
 
   if (!user) {
-    navigate('/auth');
+    navigate("/auth");
     return null;
   }
 
   return (
     <div className="min-h-screen min-h-screen-mobile bg-gradient-to-b from-background to-muted/20">
-      <SEO 
+      <SEO
         title="Settings"
         description="Manage your account settings and preferences"
       />
@@ -62,8 +83,12 @@ const Settings = () => {
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-2xl mx-auto space-y-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black mb-1 sm:mb-2">Settings</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Manage your account settings and preferences</p>
+            <h1 className="text-2xl sm:text-3xl font-black mb-1 sm:mb-2">
+              Settings
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Manage your account settings and preferences
+            </p>
           </div>
 
           <Card>
@@ -74,7 +99,7 @@ const Settings = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label>Email</Label>
-                <Input value={user.email || ''} disabled className="mt-2" />
+                <Input value={user.email || ""} disabled className="mt-2" />
               </div>
               <div>
                 <Label>User ID</Label>
@@ -99,8 +124,10 @@ const Settings = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Delete Account</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Permanently delete your account and all associated data. This action cannot be undone.
-                    All your games, RSVPs, friendships, posts, comments, and reviews will be permanently removed.
+                    Permanently delete your account and all associated data.
+                    This action cannot be undone. All your games, RSVPs,
+                    friendships, posts, comments, and reviews will be
+                    permanently removed.
                   </p>
                 </div>
 
@@ -119,7 +146,9 @@ const Settings = () => {
                       </AlertDialogTitle>
                       <AlertDialogDescription className="space-y-4">
                         <p>
-                          This action <strong>cannot be undone</strong>. This will permanently delete your account and remove all your data from our servers.
+                          This action <strong>cannot be undone</strong>. This
+                          will permanently delete your account and remove all
+                          your data from our servers.
                         </p>
                         <p>The following data will be permanently deleted:</p>
                         <ul className="list-disc list-inside space-y-1 text-sm">
@@ -133,13 +162,19 @@ const Settings = () => {
                           <li>Your sports preferences</li>
                         </ul>
                         <div className="pt-4">
-                          <Label htmlFor="delete-confirm" className="text-foreground">
-                            Type <span className="font-bold">DELETE</span> to confirm
+                          <Label
+                            htmlFor="delete-confirm"
+                            className="text-foreground"
+                          >
+                            Type <span className="font-bold">DELETE</span> to
+                            confirm
                           </Label>
                           <Input
                             id="delete-confirm"
                             value={deleteConfirmation}
-                            onChange={(e) => setDeleteConfirmation(e.target.value)}
+                            onChange={(e) =>
+                              setDeleteConfirmation(e.target.value)
+                            }
                             placeholder="Type DELETE"
                             className="mt-2"
                           />
@@ -147,7 +182,9 @@ const Settings = () => {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>
+                      <AlertDialogCancel
+                        onClick={() => setDeleteConfirmation("")}
+                      >
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction

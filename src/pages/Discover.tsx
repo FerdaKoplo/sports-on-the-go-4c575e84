@@ -5,13 +5,27 @@ import { Button } from "@/components/ui/button";
 import { ShareGameButton } from "@/components/ShareGameButton";
 import { SEO } from "@/components/SEO";
 import { GameReminderBanner } from "@/components/GameReminderBanner";
-import { Calendar, Clock, Users, MapPin, Navigation, Share2, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  Calendar,
+  Clock,
+  Users,
+  MapPin,
+  Navigation,
+  Share2,
+  ExternalLink,
+  Bookmark,
+  BookmarkCheck,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
-import { toDisplaySportName, getSportEmoji, formatSportDisplay } from "@/utils/sportsUtils";
+import {
+  toDisplaySportName,
+  getSportEmoji,
+  formatSportDisplay,
+} from "@/utils/sportsUtils";
 import { useSavedGames } from "@/hooks/useSavedGames";
+import { useAuth } from "@/stores/authStore";
 
 interface Game {
   id: string;
@@ -360,7 +374,7 @@ const sampleGames: Game[] = [
     hostName: "Carlos M.",
     hostRating: 4.8,
     price: "$7",
-    lat: 29.7520,
+    lat: 29.752,
     lng: -95.3585,
     visibility: "PUBLIC",
     hostId: "sample-host-14",
@@ -388,23 +402,36 @@ const sampleGames: Game[] = [
 ];
 
 // Calculate distance between two coordinates using Haversine formula
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): string => {
   const R = 3959; // Earth's radius in miles
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
   return `${distance.toFixed(1)} mi`;
 };
 
-export default function GameMap({ games: propGames, center: propCenter, zoom = 4 }: GameMapProps) {
+export default function GameMap({
+  games: propGames,
+  center: propCenter,
+  zoom = 4,
+}: GameMapProps) {
   const [map, setMap] = useState<any>(null);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null,
+  );
   const [joiningGameId, setJoiningGameId] = useState<string | null>(null);
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [markerMap, setMarkerMap] = useState<Map<string, any>>(new Map());
@@ -412,8 +439,12 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
   const [loading, setLoading] = useState(true);
   const [hideMyGames, setHideMyGames] = useState(false);
   const [userRSVPs, setUserRSVPs] = useState<Set<string>>(new Set());
-  const [userHostedGames, setUserHostedGames] = useState<Set<string>>(new Set());
-  const [savedGamesFilter, setSavedGamesFilter] = useState<'all' | 'only-saved' | 'hide-saved'>('all');
+  const [userHostedGames, setUserHostedGames] = useState<Set<string>>(
+    new Set(),
+  );
+  const [savedGamesFilter, setSavedGamesFilter] = useState<
+    "all" | "only-saved" | "hide-saved"
+  >("all");
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -428,14 +459,21 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
     emoji: getSportEmoji(game.sport, game.custom_emoji),
     location: game.location_name,
     address: `${game.address}, ${game.city}`,
-    date: new Date(game.game_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: new Date(`2000-01-01T${game.start_time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    distance: '0 mi',
+    date: new Date(game.game_date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }),
+    time: new Date(`2000-01-01T${game.start_time}`).toLocaleTimeString(
+      "en-US",
+      { hour: "numeric", minute: "2-digit" },
+    ),
+    distance: "0 mi",
     players: { current: game.current_players, max: game.max_players },
-    skillLevel: game.skill_level.replace('_', ' '),
-    hostName: game.profiles?.username || 'Unknown',
+    skillLevel: game.skill_level.replace("_", " "),
+    hostName: game.profiles?.username || "Unknown",
     hostRating: 4.5,
-    price: 'Free',
+    price: "Free",
     lat: parseFloat(game.latitude),
     lng: parseFloat(game.longitude),
     visibility: game.visibility,
@@ -449,27 +487,27 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
   useEffect(() => {
     const fetchUserGames = async () => {
       if (!user) return;
-      
+
       // Fetch RSVPs
       const { data: rsvpData } = await supabase
-        .from('rsvps')
-        .select('game_id')
-        .eq('user_id', user.id)
-        .eq('status', 'CONFIRMED');
-      
+        .from("rsvps")
+        .select("game_id")
+        .eq("user_id", user.id)
+        .eq("status", "CONFIRMED");
+
       if (rsvpData) {
-        const gameIds = new Set(rsvpData.map(rsvp => rsvp.game_id));
+        const gameIds = new Set(rsvpData.map((rsvp) => rsvp.game_id));
         setUserRSVPs(gameIds);
       }
 
       // Fetch hosted games
       const { data: hostedData } = await supabase
-        .from('games')
-        .select('id')
-        .eq('host_id', user.id);
-      
+        .from("games")
+        .select("id")
+        .eq("host_id", user.id);
+
       if (hostedData) {
-        const gameIds = new Set(hostedData.map(game => game.id));
+        const gameIds = new Set(hostedData.map((game) => game.id));
         setUserHostedGames(gameIds);
       }
     };
@@ -479,13 +517,14 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
 
   // Fetch games from database and set up realtime subscription
   const fetchGames = useCallback(async () => {
-    console.log('🎮 [Discover] Fetching games from database...');
+    console.log("🎮 [Discover] Fetching games from database...");
     setLoading(true);
-    
+
     try {
       const { data: gamesData, error } = await supabase
-        .from('games')
-        .select(`
+        .from("games")
+        .select(
+          `
           id,
           sport,
           custom_sport_name,
@@ -502,25 +541,26 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
           host_id,
           visibility,
           profiles!games_host_id_fkey(username)
-        `)
-        .eq('status', 'UPCOMING')
-        .order('game_date', { ascending: true });
+        `,
+        )
+        .eq("status", "UPCOMING")
+        .order("game_date", { ascending: true });
 
       if (error) {
-        console.error('❌ [Discover] Error fetching games:', error);
+        console.error("❌ [Discover] Error fetching games:", error);
         throw error;
       }
 
-      console.log('✅ [Discover] Games fetched:', gamesData?.length || 0);
+      console.log("✅ [Discover] Games fetched:", gamesData?.length || 0);
 
       const transformedGames: Game[] = (gamesData || []).map(transformGame);
       setDbGames(transformedGames);
     } catch (error) {
-      console.error('❌ [Discover] Error:', error);
+      console.error("❌ [Discover] Error:", error);
       toast({
-        title: 'Error loading games',
-        description: 'Could not load games from database',
-        variant: 'destructive',
+        title: "Error loading games",
+        description: "Could not load games from database",
+        variant: "destructive",
       });
       setDbGames(sampleGames);
     } finally {
@@ -528,28 +568,28 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
     }
   }, [toast, transformGame]);
 
-
   useEffect(() => {
     fetchGames();
 
     // Set up realtime subscription for game changes
-    console.log('🔴 [Discover] Setting up realtime subscription...');
+    console.log("🔴 [Discover] Setting up realtime subscription...");
     const channel = supabase
-      .channel('games-changes')
+      .channel("games-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'games'
+          event: "INSERT",
+          schema: "public",
+          table: "games",
         },
         async (payload) => {
-          console.log('🆕 [Discover] New game detected:', payload);
-          
+          console.log("🆕 [Discover] New game detected:", payload);
+
           // Fetch the complete game data including profile
           const { data: newGameData, error } = await supabase
-            .from('games')
-            .select(`
+            .from("games")
+            .select(
+              `
               id,
               sport,
               custom_sport_name,
@@ -566,36 +606,41 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
               host_id,
               visibility,
               profiles!games_host_id_fkey(username)
-            `)
-            .eq('id', payload.new.id)
+            `,
+            )
+            .eq("id", payload.new.id)
             .single();
 
           if (!error && newGameData) {
             const transformedGame = transformGame(newGameData);
-            console.log('✅ [Discover] Adding new game to map:', transformedGame);
-            setDbGames(prev => [...prev, transformedGame]);
-            
+            console.log(
+              "✅ [Discover] Adding new game to map:",
+              transformedGame,
+            );
+            setDbGames((prev) => [...prev, transformedGame]);
+
             toast({
-              title: '🎮 New game available!',
+              title: "🎮 New game available!",
               description: `${transformedGame.sport} at ${transformedGame.location}`,
             });
           }
-        }
+        },
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'games'
+          event: "UPDATE",
+          schema: "public",
+          table: "games",
         },
         async (payload) => {
-          console.log('📝 [Discover] Game updated:', payload);
-          
+          console.log("📝 [Discover] Game updated:", payload);
+
           // Fetch the updated game data
           const { data: updatedGameData, error } = await supabase
-            .from('games')
-            .select(`
+            .from("games")
+            .select(
+              `
               id,
               sport,
               custom_sport_name,
@@ -612,66 +657,69 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
               host_id,
               visibility,
               profiles!games_host_id_fkey(username)
-            `)
-            .eq('id', payload.new.id)
+            `,
+            )
+            .eq("id", payload.new.id)
             .single();
 
           if (!error && updatedGameData) {
             const transformedGame = transformGame(updatedGameData);
-            console.log('✅ [Discover] Updating game on map:', transformedGame);
-            setDbGames(prev => prev.map(game => 
-              game.id === transformedGame.id ? transformedGame : game
-            ));
-            
+            console.log("✅ [Discover] Updating game on map:", transformedGame);
+            setDbGames((prev) =>
+              prev.map((game) =>
+                game.id === transformedGame.id ? transformedGame : game,
+              ),
+            );
+
             toast({
-              title: '📝 Game updated',
+              title: "📝 Game updated",
               description: `${transformedGame.sport} at ${transformedGame.location}`,
             });
           }
-        }
+        },
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'games'
+          event: "DELETE",
+          schema: "public",
+          table: "games",
         },
         (payload) => {
-          console.log('🗑️ [Discover] Game deleted:', payload);
+          console.log("🗑️ [Discover] Game deleted:", payload);
           const gameId = payload.old.id;
-          
-          setDbGames(prev => {
-            const deletedGame = prev.find(g => g.id === gameId);
+
+          setDbGames((prev) => {
+            const deletedGame = prev.find((g) => g.id === gameId);
             if (deletedGame) {
               toast({
-                title: '🗑️ Game cancelled',
+                title: "🗑️ Game cancelled",
                 description: `${deletedGame.sport} at ${deletedGame.location} has been cancelled`,
               });
             }
-            return prev.filter(game => game.id !== gameId);
+            return prev.filter((game) => game.id !== gameId);
           });
-        }
+        },
       )
       .subscribe();
 
     return () => {
-      console.log('🔴 [Discover] Cleaning up realtime subscription');
+      console.log("🔴 [Discover] Cleaning up realtime subscription");
       supabase.removeChannel(channel);
     };
   }, [toast]);
 
   // Use propGames if provided, otherwise use fetched DB games
   const games = propGames || dbGames;
-  
+
   // Restore game selection from URL on page load
   useEffect(() => {
-    const gameId = searchParams.get('gameId');
-    
+    const gameId = searchParams.get("gameId");
+
     // Only restore if we have URL param and no game is already selected
     if (gameId && games.length > 0 && !selectedGame) {
-      const game = games.find(g => g.id === gameId);
-      
+      const game = games.find((g) => g.id === gameId);
+
       if (game) {
         setSelectedGame(game);
         if (map) {
@@ -680,84 +728,105 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
       }
     }
   }, [searchParams, games, map, selectedGame]);
-  
+
   // Auto-center map on first real game with coordinates
-  const center = propCenter || (games.length > 0 && games[0].lat && games[0].lng 
-    ? [games[0].lat, games[0].lng] as [number, number]
-    : [39.8283, -98.5795] as [number, number]);
+  const center =
+    propCenter ||
+    (games.length > 0 && games[0].lat && games[0].lng
+      ? ([games[0].lat, games[0].lng] as [number, number])
+      : ([39.8283, -98.5795] as [number, number]));
 
   // Get unique sports from games (using DB enum values)
   const availableSports = useMemo(() => {
-    return Array.from(new Set(games.map(g => g.rawSport))).sort();
+    return Array.from(new Set(games.map((g) => g.rawSport))).sort();
   }, [games]);
 
   // Filter games based on selected sports and visibility
   const filteredGames = useMemo(() => {
     let filtered = games;
-    
+
     // Filter out past games based on user's local timezone
     const now = new Date();
-    filtered = filtered.filter(game => {
+    filtered = filtered.filter((game) => {
       // Skip filtering for sample games without rawGameDate
       if (!game.rawGameDate || !game.rawStartTime) {
         return true;
       }
-      
+
       // Combine date and time into a single Date object in user's local timezone
       const gameDateTime = new Date(`${game.rawGameDate}T${game.rawStartTime}`);
-      
+
       // Only show games that haven't passed yet
       return gameDateTime > now;
     });
-    
+
     // Filter by selected sports
     if (selectedSports.length > 0) {
-      filtered = filtered.filter(game => selectedSports.includes(game.rawSport));
+      filtered = filtered.filter((game) =>
+        selectedSports.includes(game.rawSport),
+      );
     }
-    
+
     // Filter by visibility rules
-    filtered = filtered.filter(game => {
+    filtered = filtered.filter((game) => {
       // Public games are visible to everyone
-      if (game.visibility === 'PUBLIC') {
+      if (game.visibility === "PUBLIC") {
         return true;
       }
-      
+
       // For FRIENDS_ONLY and INVITE_ONLY games, only show to users in RSVP list or host
-      if (game.visibility === 'FRIENDS_ONLY' || game.visibility === 'INVITE_ONLY') {
+      if (
+        game.visibility === "FRIENDS_ONLY" ||
+        game.visibility === "INVITE_ONLY"
+      ) {
         if (!user) return false; // Not visible if user is not logged in
-        
+
         const isHost = game.hostId === user.id;
         const hasRSVP = userRSVPs.has(game.id);
-        
+
         return isHost || hasRSVP;
       }
-      
+
       return true;
     });
-    
+
     // Filter out user's games if hideMyGames is true
     if (hideMyGames && user) {
-      filtered = filtered.filter(game => {
+      filtered = filtered.filter((game) => {
         const isHost = userHostedGames.has(game.id);
         const hasRSVP = userRSVPs.has(game.id);
         return !isHost && !hasRSVP;
       });
     }
-    
+
     // Filter by saved games preference
-    if (savedGamesFilter === 'only-saved' && user) {
-      filtered = filtered.filter(game => savedGameIds.has(game.id));
-    } else if (savedGamesFilter === 'hide-saved' && user) {
-      filtered = filtered.filter(game => !savedGameIds.has(game.id));
+    if (savedGamesFilter === "only-saved" && user) {
+      filtered = filtered.filter((game) => savedGameIds.has(game.id));
+    } else if (savedGamesFilter === "hide-saved" && user) {
+      filtered = filtered.filter((game) => !savedGameIds.has(game.id));
     }
-    
+
     return filtered;
-  }, [games, selectedSports, hideMyGames, user, userRSVPs, userHostedGames, savedGamesFilter, savedGameIds]);
+  }, [
+    games,
+    selectedSports,
+    hideMyGames,
+    user,
+    userRSVPs,
+    userHostedGames,
+    savedGamesFilter,
+    savedGameIds,
+  ]);
 
   // Apply sport filter from URL on mount
   useEffect(() => {
-    const sportParam = searchParams.get('sport');
-    if (sportParam && availableSports.length > 0 && availableSports.includes(sportParam) && selectedSports.length === 0) {
+    const sportParam = searchParams.get("sport");
+    if (
+      sportParam &&
+      availableSports.length > 0 &&
+      availableSports.includes(sportParam) &&
+      selectedSports.length === 0
+    ) {
       setSelectedSports([sportParam]);
       // Clear the URL parameter after applying
       setSearchParams({});
@@ -774,7 +843,7 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
         },
         (error) => {
           console.log("Location access denied or unavailable");
-        }
+        },
       );
     }
   }, []);
@@ -783,15 +852,18 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
   useEffect(() => {
     // Don't initialize map until games are loaded
     if (loading) return;
-    
+
     if (typeof window !== "undefined" && !map) {
       import("leaflet").then((L) => {
         // Fix default marker icon
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
-          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-          iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          iconUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          iconRetinaUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+          shadowUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
         });
 
         // Initialize map
@@ -799,11 +871,12 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
 
         // Add OpenStreetMap tiles
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           maxZoom: 19,
         }).addTo(mapInstance);
 
-        console.log('🗺️ [Discover] Map initialized');
+        console.log("🗺️ [Discover] Map initialized");
         setMap(mapInstance);
 
         // Cleanup
@@ -826,10 +899,12 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
     // Create new markers
     import("leaflet").then((L) => {
       const newMarkerMap = new Map();
-      
+
       games.forEach((game) => {
-        console.log(`📍 [Discover] Adding marker for ${game.sport} at ${game.location} (${game.lat}, ${game.lng})`);
-        
+        console.log(
+          `📍 [Discover] Adding marker for ${game.sport} at ${game.location} (${game.lat}, ${game.lng})`,
+        );
+
         const icon = L.divIcon({
           className: "custom-marker",
           html: `
@@ -858,7 +933,7 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
         marker.on("click", () => {
           setSelectedGame(game);
           const params = new URLSearchParams(searchParams);
-          params.set('gameId', game.id);
+          params.set("gameId", game.id);
           setSearchParams(params);
           map.setView([game.lat, game.lng], 14);
         });
@@ -875,8 +950,8 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
   useEffect(() => {
     if (markerMap.size === 0) return;
 
-    const filteredIds = new Set(filteredGames.map(g => g.id));
-    
+    const filteredIds = new Set(filteredGames.map((g) => g.id));
+
     games.forEach((game) => {
       const marker = markerMap.get(game.id);
       if (marker) {
@@ -890,21 +965,19 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
   }, [filteredGames, markerMap, games]);
 
   const toggleSportFilter = (sport: string) => {
-    setSelectedSports(prev => 
-      prev.includes(sport) 
-        ? prev.filter(s => s !== sport)
-        : [...prev, sport]
+    setSelectedSports((prev) =>
+      prev.includes(sport) ? prev.filter((s) => s !== sport) : [...prev, sport],
     );
   };
 
   const openInAppleMaps = (game: Game) => {
     const url = `https://maps.apple.com/?q=${encodeURIComponent(game.location)}&ll=${game.lat},${game.lng}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   const openInGoogleMaps = (game: Game) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${game.lat},${game.lng}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   const handleJoinGame = async (gameId: string) => {
@@ -919,7 +992,7 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
     }
 
     // Check if user is the host of this game
-    const game = games.find(g => g.id === gameId);
+    const game = games.find((g) => g.id === gameId);
     if (game && game.hostId === user.id) {
       toast({
         title: "Cannot join",
@@ -943,11 +1016,12 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
     if (game) {
       const gameDateTime = new Date(`${game.rawGameDate}T${game.rawStartTime}`);
       const now = new Date();
-      
+
       if (gameDateTime < now) {
         toast({
           title: "Game has passed",
-          description: "You cannot join a game that has already started or ended.",
+          description:
+            "You cannot join a game that has already started or ended.",
           variant: "destructive",
         });
         return;
@@ -972,7 +1046,7 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
             variant: "destructive",
           });
           // Update local state
-          setUserRSVPs(prev => new Set([...prev, gameId]));
+          setUserRSVPs((prev) => new Set([...prev, gameId]));
           return;
         }
         // Handle specific error for host trying to join own game
@@ -1001,18 +1075,19 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
             .insert({
               community_id: communityData.id,
               user_id: user.id,
-              role: 'member'
+              role: "member",
             })
             .select();
         }
 
         toast({
           title: "Successfully joined!",
-          description: "You're confirmed for this game and added to its community.",
+          description:
+            "You're confirmed for this game and added to its community.",
         });
-        
+
         // Update local state to reflect the join
-        setUserRSVPs(prev => new Set([...prev, gameId]));
+        setUserRSVPs((prev) => new Set([...prev, gameId]));
       }
     } catch (error) {
       console.error("Error joining game:", error);
@@ -1059,7 +1134,9 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
           }
         },
         (error) => {
-          alert("Unable to get your location. Please enable location services.");
+          alert(
+            "Unable to get your location. Please enable location services.",
+          );
         },
       );
     } else {
@@ -1076,7 +1153,7 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
         canonicalUrl="https://squadup.app/discover"
       />
       <Navbar />
-      
+
       {/* Game Reminder Banner */}
       {user && (
         <div className="pt-20 pb-2 px-4">
@@ -1085,413 +1162,514 @@ export default function GameMap({ games: propGames, center: propCenter, zoom = 4
           </div>
         </div>
       )}
-      
-      <div className={`${user ? 'pt-2' : 'pt-20'} px-2 sm:px-4 pb-4 safe-bottom flex justify-center`}>
+
+      <div
+        className={`${user ? "pt-2" : "pt-20"} px-2 sm:px-4 pb-4 safe-bottom flex justify-center`}
+      >
         <div className="w-full max-w-7xl">
           <div className="mb-4 sm:mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Find Your Game</h1>
-            <p className="text-sm sm:text-base text-gray-600">Discover pickup games near you</p>
-          
-          {/* Sports Filter - Responsive padding */}
-          <div className="mt-4 sm:mt-6 bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Filter by Sport:</h3>
-            
-            <div className="space-y-3 mb-4">
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {availableSports.map((sport) => {
-                  const isSelected = selectedSports.includes(sport);
-                  const emoji = getSportEmoji(sport);
-                  const displayName = toDisplaySportName(sport);
-                  
-                  return (
-                    <button
-                      key={sport}
-                      onClick={() => toggleSportFilter(sport)}
-                    className={`
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              Find Your Game
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              Discover pickup games near you
+            </p>
+
+            {/* Sports Filter - Responsive padding */}
+            <div className="mt-4 sm:mt-6 bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
+                Filter by Sport:
+              </h3>
+
+              <div className="space-y-3 mb-4">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  {availableSports.map((sport) => {
+                    const isSelected = selectedSports.includes(sport);
+                    const emoji = getSportEmoji(sport);
+                    const displayName = toDisplaySportName(sport);
+
+                    return (
+                      <button
+                        key={sport}
+                        onClick={() => toggleSportFilter(sport)}
+                        className={`
                       inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium
                       transition-all duration-200
-                      ${isSelected
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }
                     `}
-                  >
-                    <span className="text-sm sm:text-base">{emoji}</span>
-                    <span>{displayName}</span>
-                  </button>
-                );
-              })}
-            </div>
-            
-            <div className="flex flex-col gap-2 pt-2 border-t border-gray-200">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="hideMyGames"
-                  checked={hideMyGames}
-                  onChange={(e) => setHideMyGames(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300"
-                />
-                <label htmlFor="hideMyGames" className="text-sm text-gray-600 cursor-pointer">
-                  Hide My Games (hosting or RSVPed)
-                </label>
-              </div>
-
-              {/* Saved Games Filter */}
-              {user && (
-                <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
-                  <label className="text-sm font-medium text-gray-700">Saved Games:</label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSavedGamesFilter('all')}
-                      className={`px-3 py-1 text-xs rounded-full transition-all ${
-                        savedGamesFilter === 'all'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      Show All
-                    </button>
-                    <button
-                      onClick={() => setSavedGamesFilter('only-saved')}
-                      className={`px-3 py-1 text-xs rounded-full transition-all flex items-center gap-1 ${
-                        savedGamesFilter === 'only-saved'
-                          ? 'bg-amber-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      <Bookmark className="w-3 h-3" />
-                      Only Saved
-                    </button>
-                    <button
-                      onClick={() => setSavedGamesFilter('hide-saved')}
-                      className={`px-3 py-1 text-xs rounded-full transition-all ${
-                        savedGamesFilter === 'hide-saved'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      Hide Saved
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <p className="text-sm text-gray-500 mt-3">
-              Showing {filteredGames.length} of {games.length} games
-              {user && savedGamesFilter === 'only-saved' && savedGameIds.size > 0 && (
-                <span className="ml-1 text-amber-600">
-                  • {savedGameIds.size} saved
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[calc(100vh-200px)]">
-          {/* Map Section - Full height on desktop, fixed height on mobile */}
-          <div className="lg:col-span-2 relative h-[400px] lg:h-[calc(100vh-200px)]">
-            <div id="map" className="w-full h-full rounded-xl shadow-lg border-2 border-gray-200"></div>
-            
-            {/* Loading Overlay */}
-            {loading && (
-              <div className="absolute inset-0 bg-white/90 rounded-xl flex items-center justify-center z-[2000]">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600 font-medium">Loading games...</p>
-                </div>
-              </div>
-            )}
-            
-            {/* No Games Message */}
-            {!loading && games.length === 0 && (
-              <div className="absolute inset-0 bg-white rounded-xl flex items-center justify-center z-[2000]">
-                <div className="text-center p-6">
-                  <p className="text-xl font-semibold text-gray-900 mb-2">No games found</p>
-                  <p className="text-gray-600 mb-4">Be the first to host a game in your area!</p>
-                  <Button onClick={() => navigate('/host-game')} className="bg-blue-600 hover:bg-blue-700">
-                    Host a Game
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Locate Me Button - Responsive size */}
-            <button
-              onClick={handleLocateMe}
-              className="absolute bottom-4 right-4 z-[1000] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-lg border-2 border-blue-500 flex items-center justify-center hover:bg-blue-50 transition-all hover:scale-110"
-              title="Locate Me"
-            >
-              <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-            </button>
-
-            {/* Map Legend - Responsive positioning */}
-            {!loading && games.length > 0 && (
-              <div className="absolute top-4 left-4 z-[1000] bg-white rounded-lg shadow-lg p-2 sm:p-3 border border-gray-200 max-h-[200px] sm:max-h-[300px] overflow-y-auto max-w-[150px] sm:max-w-none">
-                <div className="text-xs font-semibold text-gray-700 mb-2">Sports on Map</div>
-                {Array.from(new Set(filteredGames.map(g => g.sport)))
-                  .map((sport) => {
-                    const game = filteredGames.find(g => g.sport === sport);
-                    return (
-                      <div key={sport} className="flex items-center gap-1 sm:gap-2 text-xs text-gray-600 mt-1">
-                        <span className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs sm:text-base">{game?.emoji}</span>
-                        <span className="hidden sm:inline">{sport}</span>
-                      </div>
+                      >
+                        <span className="text-sm sm:text-base">{emoji}</span>
+                        <span>{displayName}</span>
+                      </button>
                     );
                   })}
-              </div>
-            )}
-          </div>
-
-          {/* Game Details Panel - Scrollable on mobile and desktop */}
-          <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-12rem)] lg:max-h-[calc(100vh-200px)]">
-            {selectedGame ? (
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="text-4xl mb-2">{selectedGame.emoji}</div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h2 className="text-2xl font-bold text-gray-900">{selectedGame.sport}</h2>
-                      {isSaved(selectedGame.id) && (
-                        <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
-                          <Bookmark className="w-3 h-3 mr-1" />
-                          Saved
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600 mt-1">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {selectedGame.location}
-                    </div>
-                  </div>
-                        <Badge className="bg-blue-100 text-blue-700 border-blue-300">
-                          {userLocation 
-                            ? calculateDistance(userLocation[0], userLocation[1], selectedGame.lat, selectedGame.lng)
-                            : selectedGame.distance
-                          }
-                        </Badge>
                 </div>
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Calendar className="w-5 h-5 text-gray-600" />
-                    <div>
-                      <div className="text-xs text-gray-500">Date</div>
-                      <div className="font-semibold text-gray-900">{selectedGame.date}</div>
-                    </div>
+                <div className="flex flex-col gap-2 pt-2 border-t border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="hideMyGames"
+                      checked={hideMyGames}
+                      onChange={(e) => setHideMyGames(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <label
+                      htmlFor="hideMyGames"
+                      className="text-sm text-gray-600 cursor-pointer"
+                    >
+                      Hide My Games (hosting or RSVPed)
+                    </label>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Clock className="w-5 h-5 text-gray-600" />
-                    <div>
-                      <div className="text-xs text-gray-500">Time</div>
-                      <div className="font-semibold text-gray-900">{selectedGame.time}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Users className="w-5 h-5 text-gray-600" />
-                    <div>
-                      <div className="text-xs text-gray-500">Players</div>
-                      <div className="font-semibold text-gray-900">
-                        {selectedGame.players.current}/{selectedGame.players.max}
+                  {/* Saved Games Filter */}
+                  {user && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                      <label className="text-sm font-medium text-gray-700">
+                        Saved Games:
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSavedGamesFilter("all")}
+                          className={`px-3 py-1 text-xs rounded-full transition-all ${
+                            savedGamesFilter === "all"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          Show All
+                        </button>
+                        <button
+                          onClick={() => setSavedGamesFilter("only-saved")}
+                          className={`px-3 py-1 text-xs rounded-full transition-all flex items-center gap-1 ${
+                            savedGamesFilter === "only-saved"
+                              ? "bg-amber-500 text-white"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          <Bookmark className="w-3 h-3" />
+                          Only Saved
+                        </button>
+                        <button
+                          onClick={() => setSavedGamesFilter("hide-saved")}
+                          className={`px-3 py-1 text-xs rounded-full transition-all ${
+                            savedGamesFilter === "hide-saved"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          Hide Saved
+                        </button>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                <p className="text-sm text-gray-500 mt-3">
+                  Showing {filteredGames.length} of {games.length} games
+                  {user &&
+                    savedGamesFilter === "only-saved" &&
+                    savedGameIds.size > 0 && (
+                      <span className="ml-1 text-amber-600">
+                        • {savedGameIds.size} saved
+                      </span>
+                    )}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[calc(100vh-200px)]">
+              {/* Map Section - Full height on desktop, fixed height on mobile */}
+              <div className="lg:col-span-2 relative h-[400px] lg:h-[calc(100vh-200px)]">
+                <div
+                  id="map"
+                  className="w-full h-full rounded-xl shadow-lg border-2 border-gray-200"
+                ></div>
+
+                {/* Loading Overlay */}
+                {loading && (
+                  <div className="absolute inset-0 bg-white/90 rounded-xl flex items-center justify-center z-[2000]">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600 font-medium">
+                        Loading games...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* No Games Message */}
+                {!loading && games.length === 0 && (
+                  <div className="absolute inset-0 bg-white rounded-xl flex items-center justify-center z-[2000]">
+                    <div className="text-center p-6">
+                      <p className="text-xl font-semibold text-gray-900 mb-2">
+                        No games found
+                      </p>
+                      <p className="text-gray-600 mb-4">
+                        Be the first to host a game in your area!
+                      </p>
+                      <Button
+                        onClick={() => navigate("/host-game")}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Host a Game
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Locate Me Button - Responsive size */}
+                <button
+                  onClick={handleLocateMe}
+                  className="absolute bottom-4 right-4 z-[1000] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-lg border-2 border-blue-500 flex items-center justify-center hover:bg-blue-50 transition-all hover:scale-110"
+                  title="Locate Me"
+                >
+                  <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                </button>
+
+                {/* Map Legend - Responsive positioning */}
+                {!loading && games.length > 0 && (
+                  <div className="absolute top-4 left-4 z-[1000] bg-white rounded-lg shadow-lg p-2 sm:p-3 border border-gray-200 max-h-[200px] sm:max-h-[300px] overflow-y-auto max-w-[150px] sm:max-w-none">
+                    <div className="text-xs font-semibold text-gray-700 mb-2">
+                      Sports on Map
+                    </div>
+                    {Array.from(new Set(filteredGames.map((g) => g.sport))).map(
+                      (sport) => {
+                        const game = filteredGames.find(
+                          (g) => g.sport === sport,
+                        );
+                        return (
+                          <div
+                            key={sport}
+                            className="flex items-center gap-1 sm:gap-2 text-xs text-gray-600 mt-1"
+                          >
+                            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs sm:text-base">
+                              {game?.emoji}
+                            </span>
+                            <span className="hidden sm:inline">{sport}</span>
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Game Details Panel - Scrollable on mobile and desktop */}
+              <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-12rem)] lg:max-h-[calc(100vh-200px)]">
+                {selectedGame ? (
                   <div>
-                    <div className="text-xs text-gray-500 mb-1">Skill Level</div>
-                    <Badge className="bg-green-100 text-green-700 border-green-300">{selectedGame.skillLevel}</Badge>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <div className="text-sm text-gray-700 mb-2">
-                    <span className="font-semibold">Host:</span> {selectedGame.hostName}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-yellow-500">★</span>
-                    <span className="font-semibold text-gray-900">{selectedGame.hostRating}</span>
-                    <span className="text-sm text-gray-500">/5.0</span>
-                  </div>
-                </div>
-
-                {/* Share Location Buttons */}
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="text-xs text-gray-600 mb-2 flex items-center gap-1">
-                    <Share2 className="w-3 h-3" />
-                    <span className="font-semibold">Open location in:</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => openInAppleMaps(selectedGame)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Apple Maps
-                    </Button>
-                    <Button
-                      onClick={() => openInGoogleMaps(selectedGame)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Google Maps
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 mb-4">
-                  {selectedGame && user && selectedGame.hostId === user.id ? (
-                    <div className="flex-1">
-                      <Badge variant="secondary" className="w-full justify-center py-3 mb-2">
-                        You're hosting this game
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="text-4xl mb-2">
+                          {selectedGame.emoji}
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            {selectedGame.sport}
+                          </h2>
+                          {isSaved(selectedGame.id) && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs bg-amber-100 text-amber-700 border-amber-300"
+                            >
+                              <Bookmark className="w-3 h-3 mr-1" />
+                              Saved
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {selectedGame.location}
+                        </div>
+                      </div>
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-300">
+                        {userLocation
+                          ? calculateDistance(
+                              userLocation[0],
+                              userLocation[1],
+                              selectedGame.lat,
+                              selectedGame.lng,
+                            )
+                          : selectedGame.distance}
                       </Badge>
-                      <p className="text-sm text-center text-muted-foreground">
-                        Hosts cannot join their own games
-                      </p>
                     </div>
-                  ) : selectedGame && userRSVPs.has(selectedGame.id) ? (
-                    <div className="flex-1">
-                      <Badge variant="secondary" className="w-full justify-center py-3 mb-2">
-                        ✓ You're in!
-                      </Badge>
-                      <p className="text-sm text-center text-muted-foreground">
-                        You've already joined this game
-                      </p>
+
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <Calendar className="w-5 h-5 text-gray-600" />
+                        <div>
+                          <div className="text-xs text-gray-500">Date</div>
+                          <div className="font-semibold text-gray-900">
+                            {selectedGame.date}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <Clock className="w-5 h-5 text-gray-600" />
+                        <div>
+                          <div className="text-xs text-gray-500">Time</div>
+                          <div className="font-semibold text-gray-900">
+                            {selectedGame.time}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <Users className="w-5 h-5 text-gray-600" />
+                        <div>
+                          <div className="text-xs text-gray-500">Players</div>
+                          <div className="font-semibold text-gray-900">
+                            {selectedGame.players.current}/
+                            {selectedGame.players.max}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  ) : selectedGame && selectedGame.rawGameDate && selectedGame.rawStartTime ? (
-                    (() => {
-                      const gameDateTime = new Date(`${selectedGame.rawGameDate}T${selectedGame.rawStartTime}`);
-                      const now = new Date();
-                      const isPastGame = gameDateTime < now;
-                      
-                      return isPastGame ? (
+
+                    <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                      <div>
+                        <div className="text-xs text-gray-500 mb-1">
+                          Skill Level
+                        </div>
+                        <Badge className="bg-green-100 text-green-700 border-green-300">
+                          {selectedGame.skillLevel}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <div className="text-sm text-gray-700 mb-2">
+                        <span className="font-semibold">Host:</span>{" "}
+                        {selectedGame.hostName}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-500">★</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedGame.hostRating}
+                        </span>
+                        <span className="text-sm text-gray-500">/5.0</span>
+                      </div>
+                    </div>
+
+                    {/* Share Location Buttons */}
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="text-xs text-gray-600 mb-2 flex items-center gap-1">
+                        <Share2 className="w-3 h-3" />
+                        <span className="font-semibold">Open location in:</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => openInAppleMaps(selectedGame)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Apple Maps
+                        </Button>
+                        <Button
+                          onClick={() => openInGoogleMaps(selectedGame)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Google Maps
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 mb-4">
+                      {selectedGame &&
+                      user &&
+                      selectedGame.hostId === user.id ? (
                         <div className="flex-1">
-                          <Badge variant="outline" className="w-full justify-center py-3 mb-2">
-                            Game has ended
+                          <Badge
+                            variant="secondary"
+                            className="w-full justify-center py-3 mb-2"
+                          >
+                            You're hosting this game
                           </Badge>
                           <p className="text-sm text-center text-muted-foreground">
-                            This game has already started or ended
+                            Hosts cannot join their own games
                           </p>
                         </div>
+                      ) : selectedGame && userRSVPs.has(selectedGame.id) ? (
+                        <div className="flex-1">
+                          <Badge
+                            variant="secondary"
+                            className="w-full justify-center py-3 mb-2"
+                          >
+                            ✓ You're in!
+                          </Badge>
+                          <p className="text-sm text-center text-muted-foreground">
+                            You've already joined this game
+                          </p>
+                        </div>
+                      ) : selectedGame &&
+                        selectedGame.rawGameDate &&
+                        selectedGame.rawStartTime ? (
+                        (() => {
+                          const gameDateTime = new Date(
+                            `${selectedGame.rawGameDate}T${selectedGame.rawStartTime}`,
+                          );
+                          const now = new Date();
+                          const isPastGame = gameDateTime < now;
+
+                          return isPastGame ? (
+                            <div className="flex-1">
+                              <Badge
+                                variant="outline"
+                                className="w-full justify-center py-3 mb-2"
+                              >
+                                Game has ended
+                              </Badge>
+                              <p className="text-sm text-center text-muted-foreground">
+                                This game has already started or ended
+                              </p>
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() =>
+                                selectedGame && handleJoinGame(selectedGame.id)
+                              }
+                              disabled={joiningGameId === selectedGame?.id}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all"
+                            >
+                              {joiningGameId === selectedGame?.id
+                                ? "Joining..."
+                                : "Join Game"}
+                            </Button>
+                          );
+                        })()
                       ) : (
-                        <Button 
-                          onClick={() => selectedGame && handleJoinGame(selectedGame.id)}
+                        <Button
+                          onClick={() =>
+                            selectedGame && handleJoinGame(selectedGame.id)
+                          }
                           disabled={joiningGameId === selectedGame?.id}
                           className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all"
                         >
-                          {joiningGameId === selectedGame?.id ? "Joining..." : "Join Game"}
+                          {joiningGameId === selectedGame?.id
+                            ? "Joining..."
+                            : "Join Game"}
                         </Button>
-                      );
-                    })()
-                  ) : (
-                    <Button 
-                      onClick={() => selectedGame && handleJoinGame(selectedGame.id)}
-                      disabled={joiningGameId === selectedGame?.id}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all"
-                    >
-                      {joiningGameId === selectedGame?.id ? "Joining..." : "Join Game"}
-                    </Button>
-                  )}
-                  
-                  {/* Save/Bookmark Button */}
-                  <Button
-                    onClick={() => selectedGame && toggleSaveGame(selectedGame.id)}
-                    variant="outline"
-                    size="lg"
-                    className="px-3"
-                    title={isSaved(selectedGame?.id || '') ? "Remove from saved" : "Save for later"}
-                  >
-                    {isSaved(selectedGame?.id || '') ? (
-                      <BookmarkCheck className="w-5 h-5 text-primary" />
-                    ) : (
-                      <Bookmark className="w-5 h-5" />
-                    )}
-                  </Button>
-                  
-                  <ShareGameButton 
-                    gameId={selectedGame.id.toString()}
-                    gameName={`${selectedGame.sport} Game`}
-                    size="lg"
-                  />
-                </div>
+                      )}
 
-                <button
-                  onClick={() => {
-                    setSelectedGame(null);
-                    const params = new URLSearchParams(searchParams);
-                    params.delete('gameId');
-                    setSearchParams(params);
-                  }}
-                  className="w-full mt-3 text-sm text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  ← Back to all games
-                </button>
-              </div>
-            ) : (
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Nearby Games</h3>
-                <div className="space-y-3">
-                  {filteredGames.map((game) => (
-                    <button
-                      key={game.id}
-                      onClick={() => {
-                        setSelectedGame(game);
-                        const params = new URLSearchParams(searchParams);
-                        params.set('gameId', game.id);
-                        setSearchParams(params);
-                        if (map) {
-                          map.setView([game.lat, game.lng], 14);
+                      {/* Save/Bookmark Button */}
+                      <Button
+                        onClick={() =>
+                          selectedGame && toggleSaveGame(selectedGame.id)
                         }
+                        variant="outline"
+                        size="lg"
+                        className="px-3"
+                        title={
+                          isSaved(selectedGame?.id || "")
+                            ? "Remove from saved"
+                            : "Save for later"
+                        }
+                      >
+                        {isSaved(selectedGame?.id || "") ? (
+                          <BookmarkCheck className="w-5 h-5 text-primary" />
+                        ) : (
+                          <Bookmark className="w-5 h-5" />
+                        )}
+                      </Button>
+
+                      <ShareGameButton
+                        gameId={selectedGame.id.toString()}
+                        gameName={`${selectedGame.sport} Game`}
+                        size="lg"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSelectedGame(null);
+                        const params = new URLSearchParams(searchParams);
+                        params.delete("gameId");
+                        setSearchParams(params);
                       }}
-                      className="w-full text-left p-4 bg-gray-50 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all"
+                      className="w-full mt-3 text-sm text-gray-600 hover:text-gray-900 font-medium"
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{game.emoji}</span>
-                          <div>
-                            <div className="font-semibold text-gray-900 flex items-center gap-2">
-                              {game.sport}
-                              {isSaved(game.id) && (
-                                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
-                                  <Bookmark className="w-3 h-3 mr-1" />
-                                  Saved
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-600">{game.location}</div>
-                          </div>
-                        </div>
-                        <Badge className="bg-blue-100 text-blue-700 text-xs">
-                          {userLocation 
-                            ? calculateDistance(userLocation[0], userLocation[1], game.lat, game.lng)
-                            : game.distance
-                          }
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>
-                          {game.date} • {game.time}
-                        </span>
-                        <span>
-                          {game.players.current}/{game.players.max} players
-                        </span>
-                      </div>
+                      ← Back to all games
                     </button>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                      Nearby Games
+                    </h3>
+                    <div className="space-y-3">
+                      {filteredGames.map((game) => (
+                        <button
+                          key={game.id}
+                          onClick={() => {
+                            setSelectedGame(game);
+                            const params = new URLSearchParams(searchParams);
+                            params.set("gameId", game.id);
+                            setSearchParams(params);
+                            if (map) {
+                              map.setView([game.lat, game.lng], 14);
+                            }
+                          }}
+                          className="w-full text-left p-4 bg-gray-50 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{game.emoji}</span>
+                              <div>
+                                <div className="font-semibold text-gray-900 flex items-center gap-2">
+                                  {game.sport}
+                                  {isSaved(game.id) && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs bg-amber-100 text-amber-700 border-amber-300"
+                                    >
+                                      <Bookmark className="w-3 h-3 mr-1" />
+                                      Saved
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  {game.location}
+                                </div>
+                              </div>
+                            </div>
+                            <Badge className="bg-blue-100 text-blue-700 text-xs">
+                              {userLocation
+                                ? calculateDistance(
+                                    userLocation[0],
+                                    userLocation[1],
+                                    game.lat,
+                                    game.lng,
+                                  )
+                                : game.distance}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-gray-600">
+                            <span>
+                              {game.date} • {game.time}
+                            </span>
+                            <span>
+                              {game.players.current}/{game.players.max} players
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
-        </div>
         </div>
       </div>
 

@@ -3,11 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { User, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/stores/authStore";
 
 const SetupUsername = () => {
   const [username, setUsername] = useState("");
@@ -23,7 +29,7 @@ const SetupUsername = () => {
 
       if (!user) {
         // If not authenticated after loading, send to auth
-        navigate('/auth');
+        navigate("/auth");
         return;
       }
 
@@ -36,19 +42,19 @@ const SetupUsername = () => {
 
         // If username already exists, redirect to return URL or discover
         if (profile?.username) {
-          const returnUrl = sessionStorage.getItem('authReturnUrl');
+          const returnUrl = sessionStorage.getItem("authReturnUrl");
           if (returnUrl) {
-            sessionStorage.removeItem('authReturnUrl');
+            sessionStorage.removeItem("authReturnUrl");
             navigate(returnUrl, { replace: true });
           } else {
-            navigate('/discover', { replace: true });
+            navigate("/discover", { replace: true });
           }
         } else {
           // No username exists, show the form
           setIsChecking(false);
         }
       } catch (error) {
-        console.error('Error checking username:', error);
+        console.error("Error checking username:", error);
         // On error, show the form anyway
         setIsChecking(false);
       }
@@ -98,14 +104,14 @@ const SetupUsername = () => {
       if (updateError) throw updateError;
 
       toast.success("Username set successfully!");
-      
+
       // Check for return URL from auth flow
-      const returnUrl = sessionStorage.getItem('authReturnUrl');
+      const returnUrl = sessionStorage.getItem("authReturnUrl");
       if (returnUrl) {
-        sessionStorage.removeItem('authReturnUrl');
+        sessionStorage.removeItem("authReturnUrl");
         navigate(returnUrl);
       } else {
-        navigate('/discover');
+        navigate("/discover");
       }
     } catch (err: any) {
       console.error("Error setting username:", err);
@@ -136,7 +142,9 @@ const SetupUsername = () => {
               <MapPin className="w-7 h-7 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-black text-center">Choose Your Username</CardTitle>
+          <CardTitle className="text-2xl font-black text-center">
+            Choose Your Username
+          </CardTitle>
           <CardDescription className="text-center">
             Please choose a unique username to complete your profile setup
           </CardDescription>
@@ -169,8 +177,8 @@ const SetupUsername = () => {
                 3-20 characters, letters, numbers, and underscores only
               </p>
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-11 gradient-primary text-white shadow-primary hover:opacity-90 font-semibold"
               disabled={isLoading}
             >

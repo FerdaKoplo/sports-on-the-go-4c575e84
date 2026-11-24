@@ -1,21 +1,60 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SEO } from "@/components/SEO";
-import { ThumbsUp, ThumbsDown, MessageSquare, Send, Users, Plus, ArrowLeft, Filter, Trash2, Search, Calendar } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  Send,
+  Users,
+  Plus,
+  ArrowLeft,
+  Filter,
+  Trash2,
+  Search,
+  Calendar,
+} from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { getAllSportsDbValues, toDisplaySportName } from "@/utils/sportsUtils";
 import { format } from "date-fns";
+import { useAuth } from "@/stores/authStore";
 
 interface Community {
   id: string;
@@ -27,7 +66,7 @@ interface Community {
   created_at: string;
   game_id: string | null;
   created_by: string;
-  visibility: 'PUBLIC' | 'FRIENDS_ONLY' | 'INVITE_ONLY';
+  visibility: "PUBLIC" | "FRIENDS_ONLY" | "INVITE_ONLY";
   archived: boolean;
   archived_at: string | null;
 }
@@ -80,15 +119,23 @@ export default function Community() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  
+
   const [communities, setCommunities] = useState<Community[]>([]);
-  const [filteredCommunities, setFilteredCommunities] = useState<Community[]>([]);
-  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
+  const [filteredCommunities, setFilteredCommunities] = useState<Community[]>(
+    [],
+  );
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(
+    null,
+  );
   const [posts, setPosts] = useState<Post[]>([]);
   const [isMember, setIsMember] = useState(false);
   const [showNewCommunity, setShowNewCommunity] = useState(false);
   const [showNewPost, setShowNewPost] = useState(false);
-  const [newCommunity, setNewCommunity] = useState({ name: "", description: "", sport: "" });
+  const [newCommunity, setNewCommunity] = useState({
+    name: "",
+    description: "",
+    sport: "",
+  });
   const [newPost, setNewPost] = useState({ title: "", content: "" });
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
@@ -96,18 +143,26 @@ export default function Community() {
   const [viewMode, setViewMode] = useState<"list" | "posts">("list");
   const [sportFilter, setSportFilter] = useState<string>("ALL");
   const [showMembersPanel, setShowMembersPanel] = useState(false);
-  const [communityMembers, setCommunityMembers] = useState<CommunityMember[]>([]);
+  const [communityMembers, setCommunityMembers] = useState<CommunityMember[]>(
+    [],
+  );
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [communitySearchQuery, setCommunitySearchQuery] = useState("");
   const [editingVisibility, setEditingVisibility] = useState(false);
-  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(
+    null,
+  );
   const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const [selectedVisibility, setSelectedVisibility] = useState<'PUBLIC' | 'FRIENDS_ONLY' | 'INVITE_ONLY'>('PUBLIC');
+  const [selectedVisibility, setSelectedVisibility] = useState<
+    "PUBLIC" | "FRIENDS_ONLY" | "INVITE_ONLY"
+  >("PUBLIC");
   const [showArchived, setShowArchived] = useState(false);
   const [showReviveDialog, setShowReviveDialog] = useState(false);
   const [gameData, setGameData] = useState<any>(null);
-  const [commentSubmitting, setCommentSubmitting] = useState<string | null>(null);
+  const [commentSubmitting, setCommentSubmitting] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!loading && !user) {
@@ -130,12 +185,12 @@ export default function Community() {
 
   // Restore community view from URL on page load
   useEffect(() => {
-    const communityId = searchParams.get('communityId');
-    
+    const communityId = searchParams.get("communityId");
+
     // Only restore if we have URL param and no community is already selected
     if (communityId && communities.length > 0 && !selectedCommunity) {
-      const community = communities.find(c => c.id === communityId);
-      
+      const community = communities.find((c) => c.id === communityId);
+
       if (community) {
         setSelectedCommunity(community);
         setViewMode("posts");
@@ -145,18 +200,18 @@ export default function Community() {
 
   // Auto-scroll and highlight post when postId is in URL
   useEffect(() => {
-    const postId = searchParams.get('postId');
+    const postId = searchParams.get("postId");
     if (postId && posts.length > 0) {
       const postRef = postRefs.current.get(postId);
       if (postRef) {
         // Scroll to the post with smooth behavior
         setTimeout(() => {
-          postRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          postRef.scrollIntoView({ behavior: "smooth", block: "center" });
           setHighlightedPostId(postId);
-          
+
           // Open comments for the post
           setSelectedPost(postId);
-          
+
           // Remove highlight after 3 seconds
           setTimeout(() => {
             setHighlightedPostId(null);
@@ -180,79 +235,90 @@ export default function Community() {
     }
   }, []);
 
-  const fetchPosts = useCallback(async (communityId: string) => {
-    if (!user) return;
+  const fetchPosts = useCallback(
+    async (communityId: string) => {
+      if (!user) return;
 
-    const { data: postsData, error: postsError } = await supabase
-      .from("posts")
-      .select("id, title, content, score, comment_count, created_at, user_id, community_id")
-      .eq("community_id", communityId)
-      .order("created_at", { ascending: false });
+      const { data: postsData, error: postsError } = await supabase
+        .from("posts")
+        .select(
+          "id, title, content, score, comment_count, created_at, user_id, community_id",
+        )
+        .eq("community_id", communityId)
+        .order("created_at", { ascending: false });
 
-    if (postsError) {
-      console.error("Error fetching posts:", postsError);
-      return;
-    }
-
-    // Fetch profiles separately
-    if (postsData && postsData.length > 0) {
-      const userIds = [...new Set(postsData.map(p => p.user_id))];
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, username, first_name, last_name")
-        .in("id", userIds);
-
-      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
-      
-      // Fetch unread counts for each post
-      const postIds = postsData.map(p => p.id);
-      
-      // Get user's last view times for these posts
-      const { data: viewData } = await supabase
-        .from("post_views")
-        .select("post_id, last_viewed_at")
-        .eq("user_id", user.id)
-        .in("post_id", postIds);
-
-      const viewMap = new Map(viewData?.map(v => [v.post_id, v.last_viewed_at]) || []);
-
-      // Count unread comments for each post
-      const unreadCountsMap = new Map<string, number>();
-      
-      for (const post of postsData) {
-        const lastViewed = viewMap.get(post.id);
-        
-        if (lastViewed) {
-          // Count comments created after last view
-          const { count } = await supabase
-            .from("comments")
-            .select("*", { count: 'exact', head: true })
-            .eq("post_id", post.id)
-            .gt("created_at", lastViewed);
-          
-          unreadCountsMap.set(post.id, count || 0);
-        } else {
-          // Never viewed - count all comments
-          const { count } = await supabase
-            .from("comments")
-            .select("*", { count: 'exact', head: true })
-            .eq("post_id", post.id);
-          
-          unreadCountsMap.set(post.id, count || 0);
-        }
+      if (postsError) {
+        console.error("Error fetching posts:", postsError);
+        return;
       }
-      
-      const postsWithProfiles = postsData.map(post => ({
-        ...post,
-        profiles: profilesMap.get(post.user_id) || { username: null, first_name: "Unknown", last_name: "User" },
-        unreadCount: unreadCountsMap.get(post.id) || 0
-      }));
 
-      setPosts(postsWithProfiles as Post[]);
-    } else {
-      setPosts([]);
-    }
-  }, [user]);
+      // Fetch profiles separately
+      if (postsData && postsData.length > 0) {
+        const userIds = [...new Set(postsData.map((p) => p.user_id))];
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, username, first_name, last_name")
+          .in("id", userIds);
+
+        const profilesMap = new Map(profilesData?.map((p) => [p.id, p]) || []);
+
+        // Fetch unread counts for each post
+        const postIds = postsData.map((p) => p.id);
+
+        // Get user's last view times for these posts
+        const { data: viewData } = await supabase
+          .from("post_views")
+          .select("post_id, last_viewed_at")
+          .eq("user_id", user.id)
+          .in("post_id", postIds);
+
+        const viewMap = new Map(
+          viewData?.map((v) => [v.post_id, v.last_viewed_at]) || [],
+        );
+
+        // Count unread comments for each post
+        const unreadCountsMap = new Map<string, number>();
+
+        for (const post of postsData) {
+          const lastViewed = viewMap.get(post.id);
+
+          if (lastViewed) {
+            // Count comments created after last view
+            const { count } = await supabase
+              .from("comments")
+              .select("*", { count: "exact", head: true })
+              .eq("post_id", post.id)
+              .gt("created_at", lastViewed);
+
+            unreadCountsMap.set(post.id, count || 0);
+          } else {
+            // Never viewed - count all comments
+            const { count } = await supabase
+              .from("comments")
+              .select("*", { count: "exact", head: true })
+              .eq("post_id", post.id);
+
+            unreadCountsMap.set(post.id, count || 0);
+          }
+        }
+
+        const postsWithProfiles = postsData.map((post) => ({
+          ...post,
+          profiles: profilesMap.get(post.user_id) || {
+            username: null,
+            first_name: "Unknown",
+            last_name: "User",
+          },
+          unreadCount: unreadCountsMap.get(post.id) || 0,
+        }));
+
+        setPosts(postsWithProfiles as Post[]);
+      } else {
+        setPosts([]);
+      }
+    },
+    [user],
+  );
 
   const fetchComments = useCallback(async (postId: string) => {
     const { data: commentsData, error: commentsError } = await supabase
@@ -268,22 +334,29 @@ export default function Community() {
 
     // Fetch profiles separately
     if (commentsData && commentsData.length > 0) {
-      const userIds = [...new Set(commentsData.map(c => c.user_id))];
+      const userIds = [...new Set(commentsData.map((c) => c.user_id))];
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, username, first_name, last_name")
         .in("id", userIds);
 
-      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
-      
-      const commentsWithProfiles = commentsData.map(comment => ({
+      const profilesMap = new Map(profilesData?.map((p) => [p.id, p]) || []);
+
+      const commentsWithProfiles = commentsData.map((comment) => ({
         ...comment,
-        profiles: profilesMap.get(comment.user_id) || { username: null, first_name: "Unknown", last_name: "User" }
+        profiles: profilesMap.get(comment.user_id) || {
+          username: null,
+          first_name: "Unknown",
+          last_name: "User",
+        },
       }));
 
-      setComments(prev => ({ ...prev, [postId]: commentsWithProfiles as Comment[] }));
+      setComments((prev) => ({
+        ...prev,
+        [postId]: commentsWithProfiles as Comment[],
+      }));
     } else {
-      setComments(prev => ({ ...prev, [postId]: [] }));
+      setComments((prev) => ({ ...prev, [postId]: [] }));
     }
   }, []);
 
@@ -294,12 +367,12 @@ export default function Community() {
     const channel = supabase
       .channel(`community-posts-${selectedCommunity.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'posts',
-          filter: `community_id=eq.${selectedCommunity.id}`
+          event: "INSERT",
+          schema: "public",
+          table: "posts",
+          filter: `community_id=eq.${selectedCommunity.id}`,
         },
         async (payload) => {
           // Don't show notification for user's own posts
@@ -307,18 +380,18 @@ export default function Community() {
 
           // Fetch the author's profile
           const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, first_name, last_name')
-            .eq('id', payload.new.user_id)
+            .from("profiles")
+            .select("username, first_name, last_name")
+            .eq("id", payload.new.user_id)
             .maybeSingle();
 
-          const authorName = profile?.username || 
-                            `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() ||
-                            'Someone';
+          const authorName =
+            profile?.username ||
+            `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() ||
+            "Someone";
 
           // Create notification for community members
           // Server-side triggers now create notifications for members. Only show local toast.
-
 
           toast({
             title: "New post in community",
@@ -329,7 +402,7 @@ export default function Community() {
           if (selectedCommunity) {
             fetchPosts(selectedCommunity.id);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -345,12 +418,12 @@ export default function Community() {
     const channel = supabase
       .channel(`post-comments-${selectedPost}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'comments',
-          filter: `post_id=eq.${selectedPost}`
+          event: "INSERT",
+          schema: "public",
+          table: "comments",
+          filter: `post_id=eq.${selectedPost}`,
         },
         async (payload) => {
           // Don't show notification for user's own comments
@@ -358,22 +431,23 @@ export default function Community() {
 
           // Fetch the author's profile
           const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, first_name, last_name')
-            .eq('id', payload.new.user_id)
+            .from("profiles")
+            .select("username, first_name, last_name")
+            .eq("id", payload.new.user_id)
             .maybeSingle();
 
-          const authorName = profile?.username || 
-                            `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() ||
-                            'Someone';
+          const authorName =
+            profile?.username ||
+            `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() ||
+            "Someone";
 
           // Find the post title for context
-          const post = posts.find(p => p.id === selectedPost);
-          const postTitle = post?.title || 'a post';
+          const post = posts.find((p) => p.id === selectedPost);
+          const postTitle = post?.title || "a post";
 
           // Create notification for post author and other commenters
           const usersToNotify = new Set<string>();
-          
+
           // Add post author
           if (post && post.user_id !== payload.new.user_id) {
             usersToNotify.add(post.user_id);
@@ -381,14 +455,16 @@ export default function Community() {
 
           // Add other commenters
           const postComments = comments[selectedPost] || [];
-          postComments.forEach(comment => {
-            if (comment.user_id !== payload.new.user_id && comment.user_id !== user.id) {
+          postComments.forEach((comment) => {
+            if (
+              comment.user_id !== payload.new.user_id &&
+              comment.user_id !== user.id
+            ) {
               usersToNotify.add(comment.user_id);
             }
           });
 
           // Server-side triggers now create notifications for post author and commenters.
-
 
           toast({
             title: "New comment",
@@ -397,47 +473,59 @@ export default function Community() {
 
           // Refresh comments for this post
           fetchComments(selectedPost);
-        }
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedPost, user, toast, posts, fetchComments, comments, selectedCommunity]);
+  }, [
+    selectedPost,
+    user,
+    toast,
+    posts,
+    fetchComments,
+    comments,
+    selectedCommunity,
+  ]);
 
   // Real-time subscription for ALL comments in the community to update unread counts
   useEffect(() => {
     if (!selectedCommunity || !user || !posts.length) return;
 
-    const postIds = posts.map(p => p.id);
+    const postIds = posts.map((p) => p.id);
 
     const channel = supabase
       .channel(`community-all-comments-${selectedCommunity.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'comments'
+          event: "INSERT",
+          schema: "public",
+          table: "comments",
         },
         async (payload) => {
           const commentPostId = payload.new.post_id;
-          
+
           // Only process if it's for a post in this community and not the user's own comment
-          if (!postIds.includes(commentPostId) || payload.new.user_id === user.id) return;
-          
+          if (
+            !postIds.includes(commentPostId) ||
+            payload.new.user_id === user.id
+          )
+            return;
+
           // If the post is NOT currently being viewed, increment unread count
           if (selectedPost !== commentPostId) {
-            setPosts(prevPosts =>
-              prevPosts.map(p =>
+            setPosts((prevPosts) =>
+              prevPosts.map((p) =>
                 p.id === commentPostId
                   ? { ...p, unreadCount: (p.unreadCount || 0) + 1 }
-                  : p
-              )
+                  : p,
+              ),
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -450,30 +538,36 @@ export default function Community() {
   useEffect(() => {
     if (!selectedCommunity || !user || !posts.length) return;
 
-    const postIds = posts.map(p => p.id);
+    const postIds = posts.map((p) => p.id);
 
     const channel = supabase
       .channel(`community-posts-${selectedCommunity.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'posts'
+          event: "UPDATE",
+          schema: "public",
+          table: "posts",
         },
         async (payload: any) => {
           const postId = payload.new?.id;
-          
+
           // Only process posts in this community
           if (!postId || !postIds.includes(postId)) return;
 
           // Update local state with new score and comment_count
-          setPosts(prev => prev.map(p => 
-            p.id === postId 
-              ? { ...p, score: payload.new.score, comment_count: payload.new.comment_count }
-              : p
-          ));
-        }
+          setPosts((prev) =>
+            prev.map((p) =>
+              p.id === postId
+                ? {
+                    ...p,
+                    score: payload.new.score,
+                    comment_count: payload.new.comment_count,
+                  }
+                : p,
+            ),
+          );
+        },
       )
       .subscribe();
 
@@ -482,33 +576,33 @@ export default function Community() {
     };
   }, [selectedCommunity, user, posts]);
 
-
   useEffect(() => {
     let filtered = communities;
-    
+
     // Filter by archived status
-    filtered = filtered.filter(c => c.archived === showArchived);
-    
+    filtered = filtered.filter((c) => c.archived === showArchived);
+
     // Filter by sport
     if (sportFilter !== "ALL") {
-      filtered = filtered.filter(c => c.sport === sportFilter);
+      filtered = filtered.filter((c) => c.sport === sportFilter);
     }
-    
+
     // Filter by search query
     if (communitySearchQuery.trim()) {
       const query = communitySearchQuery.toLowerCase();
-      filtered = filtered.filter(c => 
-        c.name.toLowerCase().includes(query) || 
-        c.description?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (c) =>
+          c.name.toLowerCase().includes(query) ||
+          c.description?.toLowerCase().includes(query),
       );
     }
-    
+
     setFilteredCommunities(filtered);
   }, [sportFilter, communitySearchQuery, communities, showArchived]);
 
   const checkMembership = async (communityId: string) => {
     if (!user) return;
-    
+
     const { data, error } = await supabase
       .from("community_members")
       .select("id, role")
@@ -517,17 +611,21 @@ export default function Community() {
       .maybeSingle();
 
     if (error) {
-      console.error('checkMembership error:', error);
+      console.error("checkMembership error:", error);
     }
 
     setIsMember(!!data);
-    setIsAdmin(data?.role === 'admin');
+    setIsAdmin(data?.role === "admin");
   };
 
   // Helper to display a sensible member name
   const getDisplayName = (
-    p: { username?: string | null; first_name?: string; last_name?: string } = {},
-    userId?: string
+    p: {
+      username?: string | null;
+      first_name?: string;
+      last_name?: string;
+    } = {},
+    userId?: string,
   ) => {
     const uname = (p?.username || "").trim();
     if (uname) return uname;
@@ -539,13 +637,12 @@ export default function Community() {
     return "Member";
   };
 
-
   const handleCreateCommunity = async () => {
     if (!user || !newCommunity.name || !newCommunity.sport) {
       toast({
         title: "Missing fields",
         description: "Please fill in the community name and sport.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -556,8 +653,8 @@ export default function Community() {
         name: newCommunity.name,
         description: newCommunity.description,
         created_by: user.id,
-        type: 'general',
-        sport: newCommunity.sport as any
+        type: "general",
+        sport: newCommunity.sport as any,
       })
       .select()
       .single();
@@ -566,17 +663,15 @@ export default function Community() {
       toast({
         title: "Error",
         description: "Failed to create community.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       // Add creator as admin
-      await supabase
-        .from("community_members")
-        .insert({
-          community_id: communityData.id,
-          user_id: user.id,
-          role: 'admin'
-        });
+      await supabase.from("community_members").insert({
+        community_id: communityData.id,
+        user_id: user.id,
+        role: "admin",
+      });
 
       toast({ title: "Community created!" });
       setNewCommunity({ name: "", description: "", sport: "" });
@@ -588,20 +683,18 @@ export default function Community() {
   const handleJoinCommunity = async (communityId: string) => {
     if (!user) return;
 
-    const { error } = await supabase
-      .from("community_members")
-      .insert({
-        community_id: communityId,
-        user_id: user.id,
-        role: 'member'
-      });
+    const { error } = await supabase.from("community_members").insert({
+      community_id: communityId,
+      user_id: user.id,
+      role: "member",
+    });
 
     if (error) {
-      console.error('Join community error:', error);
+      console.error("Join community error:", error);
       toast({
         title: "Error joining community",
         description: error.message || "Failed to join community.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Joined community!" });
@@ -623,7 +716,7 @@ export default function Community() {
       toast({
         title: "Error",
         description: "Failed to leave community.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Left community!" });
@@ -636,52 +729,63 @@ export default function Community() {
       toast({
         title: "Missing fields",
         description: "Please fill in title and content.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     try {
       // Profanity check on title
-      const { data: titleModerationData } = await supabase.functions.invoke('moderate-content', {
-        body: { content: newPost.title }
-      });
+      const { data: titleModerationData } = await supabase.functions.invoke(
+        "moderate-content",
+        {
+          body: { content: newPost.title },
+        },
+      );
       if (titleModerationData?.isFlagged) {
         toast({
           title: "Post title blocked",
-          description: titleModerationData.reason || "Please keep it respectful.",
+          description:
+            titleModerationData.reason || "Please keep it respectful.",
           variant: "destructive",
         });
         return;
       }
 
       // Profanity check on content
-      const { data: contentModerationData } = await supabase.functions.invoke('moderate-content', {
-        body: { content: newPost.content }
-      });
+      const { data: contentModerationData } = await supabase.functions.invoke(
+        "moderate-content",
+        {
+          body: { content: newPost.content },
+        },
+      );
       if (contentModerationData?.isFlagged) {
         toast({
           title: "Post content blocked",
-          description: contentModerationData.reason || "Please keep it respectful.",
+          description:
+            contentModerationData.reason || "Please keep it respectful.",
           variant: "destructive",
         });
         return;
       }
 
       // If moderation passes, create the post
-      const { data, error } = await supabase.from("posts").insert({
-        user_id: user.id,
-        community_id: selectedCommunity.id,
-        title: newPost.title,
-        content: newPost.content
-      }).select();
+      const { data, error } = await supabase
+        .from("posts")
+        .insert({
+          user_id: user.id,
+          community_id: selectedCommunity.id,
+          title: newPost.title,
+          content: newPost.content,
+        })
+        .select();
 
       if (error) {
-        console.error('Post creation error:', error);
+        console.error("Post creation error:", error);
         toast({
           title: "Error creating post",
           description: error.message || "Failed to create post.",
-          variant: "destructive"
+          variant: "destructive",
         });
       } else {
         toast({ title: "Post created!" });
@@ -690,11 +794,11 @@ export default function Community() {
         fetchPosts(selectedCommunity.id);
       }
     } catch (error) {
-      console.error('Error in post creation:', error);
+      console.error("Error in post creation:", error);
       toast({
         title: "Error",
         description: "Failed to create post. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -703,25 +807,29 @@ export default function Community() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.rpc('adjust_post_score', {
+      const { data, error } = await supabase.rpc("adjust_post_score", {
         p_post_id: postId,
-        p_delta: delta
+        p_delta: delta,
       });
 
       if (error) throw error;
 
       // Update local state optimistically
-      setPosts(prev => prev.map(p => 
-        p.id === postId ? { ...p, score: data } : p
-      ));
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, score: data } : p)),
+      );
 
-      toast({ 
+      toast({
         title: delta > 0 ? "Liked!" : "Disliked!",
-        description: `Post score is now ${data}`
+        description: `Post score is now ${data}`,
       });
     } catch (error) {
       console.error("Error voting:", error);
-      toast({ title: "Vote failed", description: "Please try again.", variant: "destructive" });
+      toast({
+        title: "Vote failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
       if (selectedCommunity) fetchPosts(selectedCommunity.id);
     }
   };
@@ -733,9 +841,12 @@ export default function Community() {
     try {
       // 1) Optional moderation (non-blocking on network issues)
       try {
-        const { data: moderationData } = await supabase.functions.invoke('moderate-content', {
-          body: { content: newComment }
-        });
+        const { data: moderationData } = await supabase.functions.invoke(
+          "moderate-content",
+          {
+            body: { content: newComment },
+          },
+        );
         if (moderationData?.isFlagged) {
           toast({
             title: "Comment blocked",
@@ -745,7 +856,7 @@ export default function Community() {
           return;
         }
       } catch (e) {
-        console.warn('Moderation unavailable, proceeding.');
+        console.warn("Moderation unavailable, proceeding.");
       }
 
       // 2) Insert comment
@@ -756,8 +867,12 @@ export default function Community() {
         .single();
 
       if (error) {
-        console.error('Insert comment error:', error);
-        toast({ title: "Error", description: "Failed to add comment.", variant: "destructive" });
+        console.error("Insert comment error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to add comment.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -767,7 +882,11 @@ export default function Community() {
       toast({ title: "Comment added!" });
     } catch (err) {
       console.error("Error adding comment:", err);
-      toast({ title: "Error", description: "Failed to add comment.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to add comment.",
+        variant: "destructive",
+      });
     } finally {
       setCommentSubmitting(null);
     }
@@ -778,28 +897,24 @@ export default function Community() {
 
     try {
       // Upsert: update if exists, insert if not
-      const { error } = await supabase
-        .from("post_views")
-        .upsert(
-          {
-            post_id: postId,
-            user_id: user.id,
-            last_viewed_at: new Date().toISOString()
-          },
-          {
-            onConflict: 'post_id,user_id'
-          }
-        );
+      const { error } = await supabase.from("post_views").upsert(
+        {
+          post_id: postId,
+          user_id: user.id,
+          last_viewed_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "post_id,user_id",
+        },
+      );
 
       if (error) {
         console.error("Error marking post as viewed:", error);
       }
 
       // Update the unread count in the local state
-      setPosts(prevPosts =>
-        prevPosts.map(p =>
-          p.id === postId ? { ...p, unreadCount: 0 } : p
-        )
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => (p.id === postId ? { ...p, unreadCount: 0 } : p)),
       );
     } catch (error) {
       console.error("Error marking post as viewed:", error);
@@ -822,9 +937,9 @@ export default function Community() {
     setSelectedCommunity(community);
     setViewMode("posts");
     const params = new URLSearchParams(searchParams);
-    params.set('communityId', community.id);
+    params.set("communityId", community.id);
     setSearchParams(params);
-    
+
     // If community is archived and has a game_id, fetch game data and show revive dialog
     if (community.archived && community.game_id) {
       const { data: game, error } = await supabase
@@ -832,27 +947,27 @@ export default function Community() {
         .select("*")
         .eq("id", community.game_id)
         .maybeSingle();
-      
+
       if (game && !error) {
         setGameData(game);
         setShowReviveDialog(true);
       }
     }
   };
-  
+
   const handleReviveCommunity = () => {
     if (!selectedCommunity || !gameData) return;
-    
+
     // Navigate to host game page with pre-filled data from the archived game
     const params = new URLSearchParams({
       sport: gameData.sport,
       location: gameData.location_name,
       address: gameData.address,
       city: gameData.city,
-      description: gameData.description || '',
-      communityId: selectedCommunity.id
+      description: gameData.description || "",
+      communityId: selectedCommunity.id,
     });
-    
+
     navigate(`/host-game?${params.toString()}`);
     setShowReviveDialog(false);
   };
@@ -863,7 +978,7 @@ export default function Community() {
     setShowNewPost(false);
     setShowMembersPanel(false);
     const params = new URLSearchParams(searchParams);
-    params.delete('communityId');
+    params.delete("communityId");
     setSearchParams(params);
   };
 
@@ -880,17 +995,21 @@ export default function Community() {
     }
 
     if (membersData && membersData.length > 0) {
-      const userIds = [...new Set(membersData.map(m => m.user_id))];
+      const userIds = [...new Set(membersData.map((m) => m.user_id))];
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, username, first_name, last_name")
         .in("id", userIds);
 
-      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
-      
-      const membersWithProfiles = membersData.map(member => ({
+      const profilesMap = new Map(profilesData?.map((p) => [p.id, p]) || []);
+
+      const membersWithProfiles = membersData.map((member) => ({
         ...member,
-        profiles: profilesMap.get(member.user_id) || { username: null, first_name: "Unknown", last_name: "User" }
+        profiles: profilesMap.get(member.user_id) || {
+          username: null,
+          first_name: "Unknown",
+          last_name: "User",
+        },
       }));
 
       setCommunityMembers(membersWithProfiles as CommunityMember[]);
@@ -904,13 +1023,15 @@ export default function Community() {
       toast({
         title: "Permission denied",
         description: "Only the community owner can delete the community.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${selectedCommunity.name}"? This action cannot be undone.`);
-    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${selectedCommunity.name}"? This action cannot be undone.`,
+    );
+
     if (!confirmDelete) return;
 
     const { error } = await supabase
@@ -922,7 +1043,7 @@ export default function Community() {
       toast({
         title: "Error",
         description: "Failed to delete community.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Community deleted successfully!" });
@@ -936,7 +1057,7 @@ export default function Community() {
       toast({
         title: "Permission denied",
         description: "Only admins can kick members.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -946,12 +1067,14 @@ export default function Community() {
       toast({
         title: "Cannot kick yourself",
         description: "You cannot remove yourself as an admin.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    const confirmKick = window.confirm("Are you sure you want to kick this member?");
+    const confirmKick = window.confirm(
+      "Are you sure you want to kick this member?",
+    );
     if (!confirmKick) return;
 
     const { error } = await supabase
@@ -963,7 +1086,7 @@ export default function Community() {
       toast({
         title: "Error",
         description: "Failed to kick member.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Member kicked successfully!" });
@@ -973,7 +1096,11 @@ export default function Community() {
     }
   };
 
-  const handleDeleteComment = async (commentId: string, commentUserId: string, postId: string) => {
+  const handleDeleteComment = async (
+    commentId: string,
+    commentUserId: string,
+    postId: string,
+  ) => {
     if (!user) return;
 
     // Allow deletion if user is comment owner or community admin
@@ -981,7 +1108,7 @@ export default function Community() {
       toast({
         title: "Permission denied",
         description: "You can only delete your own comments or be an admin.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -995,7 +1122,7 @@ export default function Community() {
       toast({
         title: "Error",
         description: "Failed to delete comment.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Comment deleted!" });
@@ -1010,25 +1137,24 @@ export default function Community() {
       toast({
         title: "Permission denied",
         description: "You can only delete your own posts or be an admin.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    const confirmDelete = window.confirm("Are you sure you want to delete this post? This action cannot be undone.");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this post? This action cannot be undone.",
+    );
     if (!confirmDelete) return;
 
-    const { error } = await supabase
-      .from("posts")
-      .delete()
-      .eq("id", postId);
+    const { error } = await supabase.from("posts").delete().eq("id", postId);
 
     if (error) {
-      console.error('Delete post error:', error);
+      console.error("Delete post error:", error);
       toast({
         title: "Error",
         description: "Failed to delete post.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Post deleted successfully!" });
@@ -1051,12 +1177,15 @@ export default function Community() {
       toast({
         title: "Error",
         description: "Failed to update visibility.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Community visibility updated!" });
       setEditingVisibility(false);
-      setSelectedCommunity({ ...selectedCommunity, visibility: selectedVisibility });
+      setSelectedCommunity({
+        ...selectedCommunity,
+        visibility: selectedVisibility,
+      });
       fetchCommunities();
     }
   };
@@ -1075,8 +1204,12 @@ export default function Community() {
           {viewMode === "list" ? (
             <>
               <div className="mb-4 sm:mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">Communities</h1>
-                <p className="text-sm sm:text-base text-muted-foreground">Join communities and connect with players</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
+                  Communities
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Join communities and connect with players
+                </p>
               </div>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 sm:gap-4">
                 <div className="flex items-center gap-2 flex-1 w-full sm:max-w-2xl">
@@ -1105,13 +1238,15 @@ export default function Community() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     variant={showArchived ? "default" : "outline"}
                     onClick={() => setShowArchived(!showArchived)}
                   >
                     {showArchived ? "Show Active" : "Show Archived"}
                   </Button>
-                  <Button onClick={() => setShowNewCommunity(!showNewCommunity)}>
+                  <Button
+                    onClick={() => setShowNewCommunity(!showNewCommunity)}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     {showNewCommunity ? "Cancel" : "Create Community"}
                   </Button>
@@ -1127,15 +1262,30 @@ export default function Community() {
                     <Input
                       placeholder="Community name"
                       value={newCommunity.name}
-                      onChange={(e) => setNewCommunity(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setNewCommunity((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                     />
                     <Textarea
                       placeholder="Description"
                       value={newCommunity.description}
-                      onChange={(e) => setNewCommunity(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) =>
+                        setNewCommunity((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
                       rows={3}
                     />
-                    <Select value={newCommunity.sport} onValueChange={(value) => setNewCommunity(prev => ({ ...prev, sport: value }))}>
+                    <Select
+                      value={newCommunity.sport}
+                      onValueChange={(value) =>
+                        setNewCommunity((prev) => ({ ...prev, sport: value }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select sport" />
                       </SelectTrigger>
@@ -1150,14 +1300,18 @@ export default function Community() {
                         <SelectItem value="RUGBY">Rugby</SelectItem>
                         <SelectItem value="HOCKEY">Hockey</SelectItem>
                         <SelectItem value="BADMINTON">Badminton</SelectItem>
-                        <SelectItem value="TABLE_TENNIS">Table Tennis</SelectItem>
+                        <SelectItem value="TABLE_TENNIS">
+                          Table Tennis
+                        </SelectItem>
                         <SelectItem value="GOLF">Golf</SelectItem>
                         <SelectItem value="SWIMMING">Swimming</SelectItem>
                         <SelectItem value="RUNNING">Running</SelectItem>
                         <SelectItem value="CYCLING">Cycling</SelectItem>
                         <SelectItem value="GYM">Gym</SelectItem>
                         <SelectItem value="YOGA">Yoga</SelectItem>
-                        <SelectItem value="MARTIAL_ARTS">Martial Arts</SelectItem>
+                        <SelectItem value="MARTIAL_ARTS">
+                          Martial Arts
+                        </SelectItem>
                         <SelectItem value="BOXING">Boxing</SelectItem>
                         <SelectItem value="CLIMBING">Climbing</SelectItem>
                         <SelectItem value="SKATING">Skating</SelectItem>
@@ -1166,19 +1320,26 @@ export default function Community() {
                         <SelectItem value="OTHER">Other</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button onClick={handleCreateCommunity}>Create Community</Button>
+                    <Button onClick={handleCreateCommunity}>
+                      Create Community
+                    </Button>
                   </CardContent>
                 </Card>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCommunities.map(community => (
-                  <Card key={community.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                {filteredCommunities.map((community) => (
+                  <Card
+                    key={community.id}
+                    className="hover:shadow-lg transition-shadow cursor-pointer"
+                  >
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <CardTitle className="text-lg">{community.name}</CardTitle>
+                            <CardTitle className="text-lg">
+                              {community.name}
+                            </CardTitle>
                             {community.archived && (
                               <Badge variant="secondary">Archived</Badge>
                             )}
@@ -1189,7 +1350,7 @@ export default function Community() {
                         </div>
                         {community.sport && (
                           <Badge variant="default">
-                            {community.sport.replace(/_/g, ' ')}
+                            {community.sport.replace(/_/g, " ")}
                           </Badge>
                         )}
                       </div>
@@ -1200,7 +1361,7 @@ export default function Community() {
                           <Users className="w-4 h-4 mr-1" />
                           {community.member_count} members
                         </div>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => handleViewCommunity(community)}
                         >
@@ -1214,8 +1375,8 @@ export default function Community() {
             </>
           ) : (
             <div className="space-y-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="mb-4"
                 onClick={handleBackToCommunities}
               >
@@ -1228,7 +1389,9 @@ export default function Community() {
                   <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-3 sm:gap-0">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <CardTitle className="text-2xl">{selectedCommunity?.name}</CardTitle>
+                        <CardTitle className="text-2xl">
+                          {selectedCommunity?.name}
+                        </CardTitle>
                         {selectedCommunity?.archived && (
                           <Badge variant="secondary">Archived</Badge>
                         )}
@@ -1243,12 +1406,18 @@ export default function Community() {
                         </div>
                         {selectedCommunity?.sport && (
                           <Badge variant="default">
-                            {selectedCommunity.sport.replace(/_/g, ' ')}
+                            {selectedCommunity.sport.replace(/_/g, " ")}
                           </Badge>
                         )}
                         {selectedCommunity?.visibility && (
-                          <Badge variant={selectedCommunity.visibility === 'PUBLIC' ? 'secondary' : 'outline'}>
-                            {selectedCommunity.visibility.replace(/_/g, ' ')}
+                          <Badge
+                            variant={
+                              selectedCommunity.visibility === "PUBLIC"
+                                ? "secondary"
+                                : "outline"
+                            }
+                          >
+                            {selectedCommunity.visibility.replace(/_/g, " ")}
                           </Badge>
                         )}
                         {isAdmin && !editingVisibility && (
@@ -1264,33 +1433,58 @@ export default function Community() {
                       </div>
                       {isAdmin && editingVisibility && (
                         <div className="flex items-center gap-2 mt-3">
-                          <Select value={selectedVisibility} onValueChange={(value: any) => setSelectedVisibility(value)}>
+                          <Select
+                            value={selectedVisibility}
+                            onValueChange={(value: any) =>
+                              setSelectedVisibility(value)
+                            }
+                          >
                             <SelectTrigger className="w-[180px]">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="PUBLIC">Public</SelectItem>
-                              <SelectItem value="FRIENDS_ONLY">Friends Only</SelectItem>
-                              <SelectItem value="INVITE_ONLY">Invite Only</SelectItem>
+                              <SelectItem value="FRIENDS_ONLY">
+                                Friends Only
+                              </SelectItem>
+                              <SelectItem value="INVITE_ONLY">
+                                Invite Only
+                              </SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button size="sm" onClick={handleUpdateVisibility}>Save</Button>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setEditingVisibility(false);
-                            setSelectedVisibility(selectedCommunity?.visibility || 'PUBLIC');
-                          }}>Cancel</Button>
+                          <Button size="sm" onClick={handleUpdateVisibility}>
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingVisibility(false);
+                              setSelectedVisibility(
+                                selectedCommunity?.visibility || "PUBLIC",
+                              );
+                            }}
+                          >
+                            Cancel
+                          </Button>
                         </div>
                       )}
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                      <Sheet open={showMembersPanel} onOpenChange={(open) => {
-                        setShowMembersPanel(open);
-                        if (open && selectedCommunity) {
-                          fetchCommunityMembers(selectedCommunity.id);
-                        }
-                      }}>
+                      <Sheet
+                        open={showMembersPanel}
+                        onOpenChange={(open) => {
+                          setShowMembersPanel(open);
+                          if (open && selectedCommunity) {
+                            fetchCommunityMembers(selectedCommunity.id);
+                          }
+                        }}
+                      >
                         <SheetTrigger asChild>
-                          <Button variant="outline" className="w-full sm:w-auto text-sm h-9">
+                          <Button
+                            variant="outline"
+                            className="w-full sm:w-auto text-sm h-9"
+                          >
                             <Users className="w-4 h-4 mr-2" />
                             Members
                           </Button>
@@ -1300,19 +1494,32 @@ export default function Community() {
                             <SheetTitle>Community Members</SheetTitle>
                           </SheetHeader>
                           <div className="mt-6 space-y-3">
-                            {communityMembers.map(member => (
-                              <div key={member.id} className="flex items-center justify-between p-3 bg-muted rounded">
+                            {communityMembers.map((member) => (
+                              <div
+                                key={member.id}
+                                className="flex items-center justify-between p-3 bg-muted rounded"
+                              >
                                 <div>
                                   <p className="font-medium text-foreground">
-                                    {getDisplayName(member.profiles, member.user_id)}
+                                    {getDisplayName(
+                                      member.profiles,
+                                      member.user_id,
+                                    )}
                                   </p>
-                                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {member.role}
+                                  </p>
                                 </div>
                                 {isAdmin && member.user_id !== user?.id && (
                                   <Button
                                     variant="destructive"
                                     size="sm"
-                                    onClick={() => handleKickMember(member.id, member.user_id)}
+                                    onClick={() =>
+                                      handleKickMember(
+                                        member.id,
+                                        member.user_id,
+                                      )
+                                    }
                                   >
                                     Kick
                                   </Button>
@@ -1324,28 +1531,40 @@ export default function Community() {
                       </Sheet>
                       {isMember ? (
                         <>
-                          <Button onClick={() => setShowNewPost(!showNewPost)} className="w-full sm:w-auto text-sm h-9">
+                          <Button
+                            onClick={() => setShowNewPost(!showNewPost)}
+                            className="w-full sm:w-auto text-sm h-9"
+                          >
                             {showNewPost ? "Cancel" : "New Post"}
                           </Button>
                           {selectedCommunity?.created_by === user?.id && (
-                            <Button 
-                              variant="destructive" 
+                            <Button
+                              variant="destructive"
                               size="sm"
                               onClick={handleDeleteCommunity}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button 
-                            variant="outline" 
-                            onClick={() => selectedCommunity && handleLeaveCommunity(selectedCommunity.id)}
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              selectedCommunity &&
+                              handleLeaveCommunity(selectedCommunity.id)
+                            }
                             className="w-full sm:w-auto text-sm h-9"
                           >
                             Leave
                           </Button>
                         </>
                       ) : (
-                        <Button onClick={() => selectedCommunity && handleJoinCommunity(selectedCommunity.id)} className="w-full sm:w-auto text-sm h-9">
+                        <Button
+                          onClick={() =>
+                            selectedCommunity &&
+                            handleJoinCommunity(selectedCommunity.id)
+                          }
+                          className="w-full sm:w-auto text-sm h-9"
+                        >
                           Join Community
                         </Button>
                       )}
@@ -1363,12 +1582,22 @@ export default function Community() {
                     <Input
                       placeholder="Post title"
                       value={newPost.title}
-                      onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
+                      onChange={(e) =>
+                        setNewPost((prev) => ({
+                          ...prev,
+                          title: e.target.value,
+                        }))
+                      }
                     />
                     <Textarea
                       placeholder="What's on your mind?"
                       value={newPost.content}
-                      onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
+                      onChange={(e) =>
+                        setNewPost((prev) => ({
+                          ...prev,
+                          content: e.target.value,
+                        }))
+                      }
                       rows={4}
                     />
                     <Button onClick={handleCreatePost}>Post</Button>
@@ -1396,140 +1625,171 @@ export default function Community() {
                 </Card>
               )}
 
-              {isMember && posts.map(post => (
-                <Card 
-                  key={post.id}
-                  ref={(el) => {
-                    if (el) {
-                      postRefs.current.set(post.id, el);
-                    } else {
-                      postRefs.current.delete(post.id);
-                    }
-                  }}
-                  className={`transition-all duration-300 ${
-                    highlightedPostId === post.id 
-                      ? 'ring-2 ring-primary shadow-lg bg-accent/20' 
-                      : ''
-                  }`}
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl">{post.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          by {getDisplayName(post.profiles, post.user_id)} • {new Date(post.created_at).toLocaleDateString()}
-                        </p>
+              {isMember &&
+                posts.map((post) => (
+                  <Card
+                    key={post.id}
+                    ref={(el) => {
+                      if (el) {
+                        postRefs.current.set(post.id, el);
+                      } else {
+                        postRefs.current.delete(post.id);
+                      }
+                    }}
+                    className={`transition-all duration-300 ${
+                      highlightedPostId === post.id
+                        ? "ring-2 ring-primary shadow-lg bg-accent/20"
+                        : ""
+                    }`}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-xl">
+                            {post.title}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            by {getDisplayName(post.profiles, post.user_id)} •{" "}
+                            {new Date(post.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        {(post.user_id === user?.id || isAdmin) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleDeletePost(post.id, post.user_id)
+                            }
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
-                      {(post.user_id === user?.id || isAdmin) && (
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-foreground mb-4">{post.content}</p>
+
+                      <div className="mobile-stack-full">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeletePost(post.id, post.user_id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleVote(post.id, 1)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <ThumbsUp className="w-4 h-4 mr-1" />
+                          Like
                         </Button>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-foreground mb-4">{post.content}</p>
-
-                    <div className="mobile-stack-full">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleVote(post.id, 1)}
-                      >
-                        <ThumbsUp className="w-4 h-4 mr-1" />
-                        Like
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleVote(post.id, -1)}
-                      >
-                        <ThumbsDown className="w-4 h-4 mr-1" />
-                        Dislike
-                      </Button>
-                      <Badge variant="secondary" className="px-3 py-1">
-                        Score: {post.score}
-                      </Badge>
-                      <Badge variant="outline" className="px-3 py-1">
-                        {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
-                      </Badge>
-                      <Button variant="ghost" size="sm" onClick={() => toggleComments(post.id)} className="relative">
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        <span>Comments</span>
-                        {(post.unreadCount ?? 0) > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            className="absolute -top-2 -right-2"
-                          >
-                            {post.unreadCount}
-                          </Badge>
-                        )}
-                      </Button>
-                    </div>
-
-                    {selectedPost === post.id && (
-                      <div className="mt-4 space-y-3">
-                        {comments[post.id]?.map(comment => (
-                          <div key={comment.id} className="bg-muted p-3 rounded relative group">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                              <p className="text-sm font-semibold">
-                                {getDisplayName(comment.profiles, comment.user_id)}
-                              </p>
-                              <p className="text-sm text-foreground">{comment.content}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {new Date(comment.created_at).toLocaleDateString()}
-                              </p>
-                              </div>
-                              {(comment.user_id === user?.id || isAdmin) && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteComment(comment.id, comment.user_id, post.id)}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-600" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Add a comment..."
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            disabled={commentSubmitting === post.id}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleAddComment(post.id);
-                              }
-                            }}
-                          />
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleAddComment(post.id)}
-                            disabled={commentSubmitting === post.id || !newComment.trim()}
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleVote(post.id, -1)}
+                        >
+                          <ThumbsDown className="w-4 h-4 mr-1" />
+                          Dislike
+                        </Button>
+                        <Badge variant="secondary" className="px-3 py-1">
+                          Score: {post.score}
+                        </Badge>
+                        <Badge variant="outline" className="px-3 py-1">
+                          {post.comment_count}{" "}
+                          {post.comment_count === 1 ? "comment" : "comments"}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleComments(post.id)}
+                          className="relative"
+                        >
+                          <MessageSquare className="w-4 h-4 mr-1" />
+                          <span>Comments</span>
+                          {(post.unreadCount ?? 0) > 0 && (
+                            <Badge
+                              variant="destructive"
+                              className="absolute -top-2 -right-2"
+                            >
+                              {post.unreadCount}
+                            </Badge>
+                          )}
+                        </Button>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+
+                      {selectedPost === post.id && (
+                        <div className="mt-4 space-y-3">
+                          {comments[post.id]?.map((comment) => (
+                            <div
+                              key={comment.id}
+                              className="bg-muted p-3 rounded relative group"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold">
+                                    {getDisplayName(
+                                      comment.profiles,
+                                      comment.user_id,
+                                    )}
+                                  </p>
+                                  <p className="text-sm text-foreground">
+                                    {comment.content}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {new Date(
+                                      comment.created_at,
+                                    ).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                {(comment.user_id === user?.id || isAdmin) && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleDeleteComment(
+                                        comment.id,
+                                        comment.user_id,
+                                        post.id,
+                                      )
+                                    }
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Add a comment..."
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              disabled={commentSubmitting === post.id}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleAddComment(post.id);
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleAddComment(post.id)}
+                              disabled={
+                                commentSubmitting === post.id ||
+                                !newComment.trim()
+                              }
+                            >
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Revive Community Dialog */}
       <AlertDialog open={showReviveDialog} onOpenChange={setShowReviveDialog}>
         <AlertDialogContent>
@@ -1537,25 +1797,32 @@ export default function Community() {
             <AlertDialogTitle>Archived Community</AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
               <p>
-                This community is archived because the associated game has ended.
+                This community is archived because the associated game has
+                ended.
               </p>
               {gameData && (
                 <div className="bg-muted p-4 rounded-lg space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="w-4 h-4" />
                     <span className="font-medium">Original Game Date:</span>
-                    <span>{format(new Date(gameData.game_date), 'MMMM d, yyyy')}</span>
+                    <span>
+                      {format(new Date(gameData.game_date), "MMMM d, yyyy")}
+                    </span>
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">Time:</span> {gameData.start_time}
+                    <span className="font-medium">Time:</span>{" "}
+                    {gameData.start_time}
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">Location:</span> {gameData.location_name}
+                    <span className="font-medium">Location:</span>{" "}
+                    {gameData.location_name}
                   </div>
                 </div>
               )}
               <p className="text-foreground">
-                Would you like to create a new game to revive this community? This will help bring the community back to life with a fresh game session.
+                Would you like to create a new game to revive this community?
+                This will help bring the community back to life with a fresh
+                game session.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1570,3 +1837,4 @@ export default function Community() {
     </div>
   );
 }
+
