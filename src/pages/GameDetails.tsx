@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ShareGameButton } from "@/components/ShareGameButton";
 import { PlayerLiabilityWaiver } from "@/components/PlayerLiabilityWaiver";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
@@ -80,10 +80,12 @@ const GameDetails = () => {
       // Fetch game details
       const { data: gameData, error: gameError } = await supabase
         .from("games")
-        .select(`
+        .select(
+          `
           *,
           host:profiles!games_host_id_fkey(username, first_name, last_name, profile_photo, overall_rating)
-        `)
+        `,
+        )
         .eq("id", id!)
         .single();
 
@@ -126,7 +128,7 @@ const GameDetails = () => {
   const handleJoinGame = async () => {
     if (!user) {
       // Store current game URL before redirecting to auth
-      sessionStorage.setItem('authReturnUrl', window.location.pathname);
+      sessionStorage.setItem("authReturnUrl", window.location.pathname);
       navigate("/auth");
       return;
     }
@@ -141,11 +143,12 @@ const GameDetails = () => {
     if (game) {
       const gameDateTime = new Date(`${game.game_date}T${game.start_time}`);
       const now = new Date();
-      
+
       if (gameDateTime < now) {
         toast({
           title: "Game has passed",
-          description: "You cannot join a game that has already started or ended.",
+          description:
+            "You cannot join a game that has already started or ended.",
           variant: "destructive",
         });
         return;
@@ -251,7 +254,7 @@ const GameDetails = () => {
 
       setHasAcceptedWaiver(true);
       setShowWaiver(false);
-      
+
       toast({
         title: "Waiver accepted",
         description: "You can now join games. Proceeding to join this game...",
@@ -286,7 +289,7 @@ const GameDetails = () => {
       navigate(-1);
     } else {
       // No history, go to discover page
-      navigate('/discover');
+      navigate("/discover");
     }
   };
 
@@ -301,7 +304,9 @@ const GameDetails = () => {
       <div className="min-h-screen min-h-screen-mobile bg-gradient-to-b from-background to-muted/20">
         <Navbar />
         <main className="container mx-auto px-4 pt-24 pb-12 safe-bottom">
-          <p className="text-center text-muted-foreground">Loading game details...</p>
+          <p className="text-center text-muted-foreground">
+            Loading game details...
+          </p>
         </main>
       </div>
     );
@@ -329,33 +334,32 @@ const GameDetails = () => {
     );
   }
 
-  const hostName = game.host?.username || 
-    `${game.host?.first_name || ""} ${game.host?.last_name || ""}`.trim() || 
+  const hostName =
+    game.host?.username ||
+    `${game.host?.first_name || ""} ${game.host?.last_name || ""}`.trim() ||
     "Anonymous Host";
 
   const spotsLeft = game.max_players - game.current_players;
   const isFull = spotsLeft <= 0;
-  
+
   // Check if game has already passed
   const gameDateTime = new Date(`${game.game_date}T${game.start_time}`);
   const now = new Date();
   const isPastGame = gameDateTime < now;
-  
+
   // Strict check to ensure host cannot join their own game
   const isHost = Boolean(user && game && user.id === game.host_id);
   // Additional safety: Check if user already has RSVP or is the host or game has passed
-  const canJoin = Boolean(user && !isHost && !hasRSVP && !isFull && !isPastGame);
+  const canJoin = Boolean(
+    user && !isHost && !hasRSVP && !isFull && !isPastGame,
+  );
 
   return (
     <div className="min-h-screen min-h-screen-mobile bg-gradient-to-b from-background to-muted/20">
       <Navbar />
       <main className="container mx-auto px-4 pt-24 pb-12 safe-bottom">
         <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={handleBack} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
@@ -364,15 +368,32 @@ const GameDetails = () => {
             <div className="flex flex-col sm:flex-row items-start justify-between mb-4 sm:mb-6 gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <h1 className="text-2xl sm:text-3xl font-bold truncate">{formatSportDisplay(game.sport, game.custom_sport_name)}</h1>
-                  <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap">{game.skill_level}</Badge>
+                  <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                    {formatSportDisplay(game.sport, game.custom_sport_name)}
+                  </h1>
+                  <Badge
+                    variant="secondary"
+                    className="text-xs sm:text-sm whitespace-nowrap"
+                  >
+                    {game.skill_level}
+                  </Badge>
                   {game.visibility !== "PUBLIC" && (
-                    <Badge variant="outline" className="text-xs sm:text-sm whitespace-nowrap">{game.visibility}</Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-xs sm:text-sm whitespace-nowrap"
+                    >
+                      {game.visibility}
+                    </Badge>
                   )}
                 </div>
-                <p className="text-sm sm:text-base text-muted-foreground">Hosted by {hostName}</p>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Hosted by {hostName}
+                </p>
               </div>
-              <ShareGameButton gameId={game.id} gameName={`${formatSportDisplay(game.sport, game.custom_sport_name)} Game`} />
+              <ShareGameButton
+                gameId={game.id}
+                gameName={`${formatSportDisplay(game.sport, game.custom_sport_name)} Game`}
+              />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -381,7 +402,9 @@ const GameDetails = () => {
                   <MapPin className="w-5 h-5 text-muted-foreground mt-1 shrink-0" />
                   <div>
                     <p className="font-semibold">{game.location_name}</p>
-                    <p className="text-sm text-muted-foreground">{game.address}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {game.address}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {game.city}, {game.state} {game.zip_code}
                     </p>
@@ -399,7 +422,9 @@ const GameDetails = () => {
 
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-muted-foreground shrink-0" />
-                  <p>{format(new Date(game.game_date), "EEEE, MMMM d, yyyy")}</p>
+                  <p>
+                    {format(new Date(game.game_date), "EEEE, MMMM d, yyyy")}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -449,7 +474,9 @@ const GameDetails = () => {
                 <Separator className="my-6" />
                 <div>
                   <h3 className="font-semibold mb-2">Equipment Requirements</h3>
-                  <p className="text-muted-foreground">{game.equipment_requirements}</p>
+                  <p className="text-muted-foreground">
+                    {game.equipment_requirements}
+                  </p>
                 </div>
               </>
             )}
@@ -471,7 +498,10 @@ const GameDetails = () => {
                 <Button
                   className="gradient-primary text-white flex-1"
                   onClick={() => {
-                    sessionStorage.setItem('authReturnUrl', window.location.pathname);
+                    sessionStorage.setItem(
+                      "authReturnUrl",
+                      window.location.pathname,
+                    );
                     navigate("/auth");
                   }}
                 >
@@ -492,7 +522,10 @@ const GameDetails = () => {
 
               {hasRSVP && !isHost && (
                 <div className="flex-1">
-                  <Badge variant="secondary" className="w-full justify-center py-3 mb-2">
+                  <Badge
+                    variant="secondary"
+                    className="w-full justify-center py-3 mb-2"
+                  >
                     ✓ You're in!
                   </Badge>
                   <p className="text-sm text-center text-muted-foreground">
@@ -503,7 +536,10 @@ const GameDetails = () => {
 
               {isHost && (
                 <div className="flex-1">
-                  <Badge variant="secondary" className="w-full justify-center py-3 mb-2">
+                  <Badge
+                    variant="secondary"
+                    className="w-full justify-center py-3 mb-2"
+                  >
                     You're hosting this game
                   </Badge>
                   <p className="text-sm text-center text-muted-foreground">
@@ -520,7 +556,10 @@ const GameDetails = () => {
 
               {isPastGame && !isHost && (
                 <div className="flex-1">
-                  <Badge variant="outline" className="w-full justify-center py-3 mb-2">
+                  <Badge
+                    variant="outline"
+                    className="w-full justify-center py-3 mb-2"
+                  >
                     Game has ended
                   </Badge>
                   <p className="text-sm text-center text-muted-foreground">

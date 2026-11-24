@@ -7,7 +7,7 @@ import { Users, UserPlus, Send, Search } from "lucide-react";
 import { FriendCard } from "@/components/FriendCard";
 import { UserSearchDialog } from "@/components/UserSearchDialog";
 import { useFriends } from "@/hooks/useFriends";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/stores/authStore";
 
 const Friends = () => {
   const { user } = useAuth();
@@ -28,13 +28,15 @@ const Friends = () => {
       friendship.requester_id === user?.id
         ? friendship.addressee
         : friendship.requester;
-    
+
     if (!profile) return false;
 
     const displayName =
       profile.username ||
-      `${profile.first_name || ""} ${profile.last_name || ""}`.trim().toLowerCase();
-    
+      `${profile.first_name || ""} ${profile.last_name || ""}`
+        .trim()
+        .toLowerCase();
+
     return displayName.includes(searchQuery.toLowerCase());
   });
 
@@ -45,7 +47,9 @@ const Friends = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold mb-1 sm:mb-2">Friends</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold mb-1 sm:mb-2">
+                Friends
+              </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
                 Connect with other players and build your squad
               </p>
@@ -55,15 +59,26 @@ const Friends = () => {
 
           <Tabs defaultValue="friends" className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 gap-1 sm:gap-0 h-auto p-1">
-              <TabsTrigger value="friends" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 sm:py-2.5 px-1.5 sm:px-3">
+              <TabsTrigger
+                value="friends"
+                className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 sm:py-2.5 px-1.5 sm:px-3"
+              >
                 <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="truncate">Friends ({friends.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="pending" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 sm:py-2.5 px-1.5 sm:px-3">
+              <TabsTrigger
+                value="pending"
+                className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 sm:py-2.5 px-1.5 sm:px-3"
+              >
                 <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">Requests ({pendingRequests.length})</span>
+                <span className="truncate">
+                  Requests ({pendingRequests.length})
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="sent" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 sm:py-2.5 px-1.5 sm:px-3">
+              <TabsTrigger
+                value="sent"
+                className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 sm:py-2.5 px-1.5 sm:px-3"
+              >
                 <Send className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="truncate">Sent ({sentRequests.length})</span>
               </TabsTrigger>
@@ -122,7 +137,9 @@ const Friends = () => {
               ) : pendingRequests.length === 0 ? (
                 <Card className="p-8 text-center">
                   <UserPlus className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-lg mb-2">No pending requests</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    No pending requests
+                  </h3>
                   <p className="text-muted-foreground">
                     You don't have any friend requests at the moment
                   </p>
@@ -146,12 +163,16 @@ const Friends = () => {
             <TabsContent value="sent" className="space-y-4">
               {loading ? (
                 <Card className="p-8 text-center">
-                  <p className="text-muted-foreground">Loading sent requests...</p>
+                  <p className="text-muted-foreground">
+                    Loading sent requests...
+                  </p>
                 </Card>
               ) : sentRequests.length === 0 ? (
                 <Card className="p-8 text-center">
                   <Send className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-lg mb-2">No sent requests</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    No sent requests
+                  </h3>
                   <p className="text-muted-foreground mb-4">
                     You haven't sent any friend requests yet
                   </p>
