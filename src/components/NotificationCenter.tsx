@@ -1,13 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/stores/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, MessageSquare, Users, Calendar, Check, Trash2, X } from "lucide-react";
+import {
+  Bell,
+  MessageSquare,
+  Users,
+  Calendar,
+  Check,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 
 interface Notification {
@@ -39,42 +50,45 @@ export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
 
   // Helper function to enrich a notification with related data
-  const enrichNotification = useCallback(async (notification: any): Promise<Notification> => {
-    const enriched: any = { ...notification };
+  const enrichNotification = useCallback(
+    async (notification: any): Promise<Notification> => {
+      const enriched: any = { ...notification };
 
-    // Fetch community name if related_community_id exists
-    if (notification.related_community_id) {
-      const { data: community } = await supabase
-        .from("communities")
-        .select("name")
-        .eq("id", notification.related_community_id)
-        .maybeSingle();
-      enriched.community_name = community?.name;
-    }
+      // Fetch community name if related_community_id exists
+      if (notification.related_community_id) {
+        const { data: community } = await supabase
+          .from("communities")
+          .select("name")
+          .eq("id", notification.related_community_id)
+          .maybeSingle();
+        enriched.community_name = community?.name;
+      }
 
-    // Fetch post title if related_post_id exists
-    if (notification.related_post_id) {
-      const { data: post } = await supabase
-        .from("posts")
-        .select("title")
-        .eq("id", notification.related_post_id)
-        .maybeSingle();
-      enriched.post_title = post?.title;
-    }
+      // Fetch post title if related_post_id exists
+      if (notification.related_post_id) {
+        const { data: post } = await supabase
+          .from("posts")
+          .select("title")
+          .eq("id", notification.related_post_id)
+          .maybeSingle();
+        enriched.post_title = post?.title;
+      }
 
-    // Fetch game details if related_game_id exists
-    if (notification.related_game_id) {
-      const { data: game } = await supabase
-        .from("games")
-        .select("sport, location_name")
-        .eq("id", notification.related_game_id)
-        .maybeSingle();
-      enriched.game_sport = game?.sport;
-      enriched.game_location = game?.location_name;
-    }
+      // Fetch game details if related_game_id exists
+      if (notification.related_game_id) {
+        const { data: game } = await supabase
+          .from("games")
+          .select("sport, location_name")
+          .eq("id", notification.related_game_id)
+          .maybeSingle();
+        enriched.game_sport = game?.sport;
+        enriched.game_location = game?.location_name;
+      }
 
-    return enriched;
-  }, []);
+      return enriched;
+    },
+    [],
+  );
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
@@ -94,11 +108,13 @@ export function NotificationCenter() {
 
     // Fetch additional details for each notification
     const enrichedNotifications = await Promise.all(
-      (data || []).map(enrichNotification)
+      (data || []).map(enrichNotification),
     );
 
     setNotifications(enrichedNotifications as Notification[]);
-    setUnreadCount(enrichedNotifications?.filter(n => !n.is_read).length || 0);
+    setUnreadCount(
+      enrichedNotifications?.filter((n) => !n.is_read).length || 0,
+    );
   }, [user, enrichNotification]);
 
   useEffect(() => {
@@ -109,7 +125,10 @@ export function NotificationCenter() {
   useEffect(() => {
     if (!user) return;
 
-    console.log('[NotificationCenter] Setting up real-time subscription for user:', user.id);
+    console.log(
+      "[NotificationCenter] Setting up real-time subscription for user:",
+      user.id,
+    );
 
     const channel = supabase
       .channel(`user-notifications-${user.id}`, {
@@ -118,68 +137,73 @@ export function NotificationCenter() {
         },
       })
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
         },
         async (payload) => {
-          console.log('[NotificationCenter] Received INSERT event:', payload);
+          console.log("[NotificationCenter] Received INSERT event:", payload);
           const newNotification = await enrichNotification(payload.new);
-          setNotifications(prev => [newNotification as Notification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
+          setNotifications((prev) => [
+            newNotification as Notification,
+            ...prev,
+          ]);
+          setUnreadCount((prev) => prev + 1);
+
           // Show toast for new notification with community info if available
-          const description = newNotification.community_name 
+          const description = newNotification.community_name
             ? `${newNotification.message} • ${newNotification.community_name}`
             : newNotification.message;
-          
+
           toast({
             title: newNotification.title,
             description,
           });
-        }
+        },
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('[NotificationCenter] Received UPDATE event:', payload);
+          console.log("[NotificationCenter] Received UPDATE event:", payload);
           fetchNotifications();
-        }
+        },
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
+          event: "DELETE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('[NotificationCenter] Received DELETE event:', payload);
+          console.log("[NotificationCenter] Received DELETE event:", payload);
           fetchNotifications();
-        }
+        },
       )
       .subscribe((status, err) => {
-        console.log('[NotificationCenter] Subscription status:', status, err);
-        if (status === 'SUBSCRIBED') {
-          console.log('[NotificationCenter] Successfully subscribed to notifications');
+        console.log("[NotificationCenter] Subscription status:", status, err);
+        if (status === "SUBSCRIBED") {
+          console.log(
+            "[NotificationCenter] Successfully subscribed to notifications",
+          );
         }
         if (err) {
-          console.error('[NotificationCenter] Subscription error:', err);
+          console.error("[NotificationCenter] Subscription error:", err);
         }
       });
 
     return () => {
-      console.log('[NotificationCenter] Cleaning up subscription');
+      console.log("[NotificationCenter] Cleaning up subscription");
       supabase.removeChannel(channel);
     };
   }, [user, toast, fetchNotifications, enrichNotification]);
@@ -195,10 +219,10 @@ export function NotificationCenter() {
       return;
     }
 
-    setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n)),
     );
-    setUnreadCount(prev => Math.max(0, prev - 1));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
   const markAllAsRead = async () => {
@@ -215,12 +239,12 @@ export function NotificationCenter() {
       toast({
         title: "Error",
         description: "Failed to mark all as read",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
     toast({
       title: "All notifications marked as read",
@@ -238,9 +262,9 @@ export function NotificationCenter() {
       return;
     }
 
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    setUnreadCount(prev => {
-      const notification = notifications.find(n => n.id === notificationId);
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    setUnreadCount((prev) => {
+      const notification = notifications.find((n) => n.id === notificationId);
       return notification && !notification.is_read ? prev - 1 : prev;
     });
   };
@@ -258,7 +282,7 @@ export function NotificationCenter() {
       toast({
         title: "Error",
         description: "Failed to clear notifications",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -272,7 +296,7 @@ export function NotificationCenter() {
 
   const handleNotificationClick = (notification: Notification) => {
     markAsRead(notification.id);
-    
+
     if (notification.action_url) {
       navigate(notification.action_url);
       setIsOpen(false);
@@ -282,23 +306,23 @@ export function NotificationCenter() {
   const handleFriendRequestAction = async (
     friendshipId: string,
     notificationId: string,
-    action: 'accept' | 'decline'
+    action: "accept" | "decline",
   ) => {
     if (!user) return;
 
-    const newStatus = action === 'accept' ? 'ACCEPTED' : 'DECLINED';
-    
+    const newStatus = action === "accept" ? "ACCEPTED" : "DECLINED";
+
     const { error } = await supabase
-      .from('friendships')
+      .from("friendships")
       .update({ status: newStatus })
-      .eq('id', friendshipId);
+      .eq("id", friendshipId);
 
     if (error) {
       console.error(`Error ${action}ing friend request:`, error);
       toast({
         title: "Error",
         description: `Failed to ${action} friend request`,
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -307,19 +331,22 @@ export function NotificationCenter() {
     await deleteNotification(notificationId);
 
     toast({
-      title: action === 'accept' ? "Friend request accepted!" : "Friend request declined",
+      title:
+        action === "accept"
+          ? "Friend request accepted!"
+          : "Friend request declined",
     });
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'new_comment':
+      case "new_comment":
         return <MessageSquare className="w-4 h-4 text-blue-500" />;
-      case 'new_post':
+      case "new_post":
         return <MessageSquare className="w-4 h-4 text-green-500" />;
-      case 'friend_request':
+      case "friend_request":
         return <Users className="w-4 h-4 text-purple-500" />;
-      case 'game_invite':
+      case "game_invite":
         return <Calendar className="w-4 h-4 text-orange-500" />;
       default:
         return <Bell className="w-4 h-4 text-muted-foreground" />;
@@ -331,7 +358,7 @@ export function NotificationCenter() {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return 'just now';
+    if (seconds < 60) return "just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
@@ -346,17 +373,17 @@ export function NotificationCenter() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 text-xs"
             >
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent 
-        className="z-50 w-80 md:w-96 p-0 bg-background border shadow-lg" 
+      <PopoverContent
+        className="z-50 w-80 md:w-96 p-0 bg-background border shadow-lg"
         align="end"
         sideOffset={8}
       >
@@ -394,7 +421,9 @@ export function NotificationCenter() {
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bell className="w-12 h-12 text-muted-foreground/40 mb-3" />
-              <p className="text-sm text-muted-foreground">No notifications yet</p>
+              <p className="text-sm text-muted-foreground">
+                No notifications yet
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
                 We'll notify you when something happens
               </p>
@@ -405,27 +434,34 @@ export function NotificationCenter() {
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-accent/50 cursor-pointer transition-colors group relative ${
-                    !notification.is_read ? 'bg-accent/20' : ''
+                    !notification.is_read ? "bg-accent/20" : ""
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3">
-                     <div className="flex-shrink-0 mt-1">
+                    <div className="flex-shrink-0 mt-1">
                       {getNotificationIcon(notification.type)}
                     </div>
-                     <div className="flex-1 min-w-0">
-                       <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium leading-tight">
                             {notification.title}
                           </p>
-                          {notification.notification_count && notification.notification_count > 1 && (
-                            <Badge variant="secondary" className="h-5 px-1.5 text-xs">
-                              {notification.notification_count}
-                            </Badge>
-                          )}
+                          {notification.notification_count &&
+                            notification.notification_count > 1 && (
+                              <Badge
+                                variant="secondary"
+                                className="h-5 px-1.5 text-xs"
+                              >
+                                {notification.notification_count}
+                              </Badge>
+                            )}
                           {notification.community_name && (
-                            <Badge variant="outline" className="h-5 px-1.5 text-xs">
+                            <Badge
+                              variant="outline"
+                              className="h-5 px-1.5 text-xs"
+                            >
                               {notification.community_name}
                             </Badge>
                           )}
@@ -441,69 +477,74 @@ export function NotificationCenter() {
                             "{notification.post_title}"
                           </span>
                         )}
-                        {notification.game_sport && notification.game_location && (
-                          <span className="block text-xs font-medium text-foreground mt-0.5">
-                            {notification.game_sport} • {notification.game_location}
-                          </span>
-                        )}
+                        {notification.game_sport &&
+                          notification.game_location && (
+                            <span className="block text-xs font-medium text-foreground mt-0.5">
+                              {notification.game_sport} •{" "}
+                              {notification.game_location}
+                            </span>
+                          )}
                       </p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <p className="text-xs text-muted-foreground">
                           {getTimeAgo(notification.created_at)}
                         </p>
-                        {(notification.type === 'new_post' || notification.type === 'new_comment') && notification.related_community_id && (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0 text-xs text-primary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              markAsRead(notification.id);
-                              const url = notification.related_post_id 
-                                ? `/community?id=${notification.related_community_id}&postId=${notification.related_post_id}`
-                                : `/community?id=${notification.related_community_id}`;
-                              navigate(url);
-                              setIsOpen(false);
-                            }}
-                          >
-                            View thread →
-                          </Button>
-                        )}
+                        {(notification.type === "new_post" ||
+                          notification.type === "new_comment") &&
+                          notification.related_community_id && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs text-primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                                const url = notification.related_post_id
+                                  ? `/community?id=${notification.related_community_id}&postId=${notification.related_post_id}`
+                                  : `/community?id=${notification.related_community_id}`;
+                                navigate(url);
+                                setIsOpen(false);
+                              }}
+                            >
+                              View thread →
+                            </Button>
+                          )}
                       </div>
-                      {notification.type === 'friend_request' && notification.related_friendship_id && (
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="flex-1 h-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleFriendRequestAction(
-                                notification.related_friendship_id!,
-                                notification.id,
-                                'accept'
-                              );
-                            }}
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 h-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleFriendRequestAction(
-                                notification.related_friendship_id!,
-                                notification.id,
-                                'decline'
-                              );
-                            }}
-                          >
-                            Decline
-                          </Button>
-                        </div>
-                      )}
+                      {notification.type === "friend_request" &&
+                        notification.related_friendship_id && (
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="flex-1 h-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFriendRequestAction(
+                                  notification.related_friendship_id!,
+                                  notification.id,
+                                  "accept",
+                                );
+                              }}
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 h-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFriendRequestAction(
+                                  notification.related_friendship_id!,
+                                  notification.id,
+                                  "decline",
+                                );
+                              }}
+                            >
+                              Decline
+                            </Button>
+                          </div>
+                        )}
                     </div>
                     <Button
                       variant="ghost"

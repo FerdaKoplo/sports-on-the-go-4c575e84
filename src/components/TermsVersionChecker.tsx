@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/stores/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { TermsUpdateDialog } from "./TermsUpdateDialog";
-import { CURRENT_TERMS_VERSION, getVersionInfo, formatVersionDate } from "@/constants/termsVersion";
+import {
+  CURRENT_TERMS_VERSION,
+  getVersionInfo,
+  formatVersionDate,
+} from "@/constants/termsVersion";
 import { toast } from "sonner";
 
 interface TermsVersionCheckerProps {
@@ -52,8 +56,14 @@ export const TermsVersionChecker = ({ children }: TermsVersionCheckerProps) => {
         const versionInfo = getVersionInfo(CURRENT_TERMS_VERSION);
         const formattedDate = versionInfo
           ? formatVersionDate(versionInfo.date)
-          : new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date());
-        const description = versionInfo?.description || "Terms and Conditions have been updated";
+          : new Intl.DateTimeFormat("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              timeZone: "UTC",
+            }).format(new Date());
+        const description =
+          versionInfo?.description || "Terms and Conditions have been updated";
         const title = `Terms Updated to v${CURRENT_TERMS_VERSION}`;
 
         const { data: existing } = await supabase
@@ -101,8 +111,15 @@ export const TermsVersionChecker = ({ children }: TermsVersionCheckerProps) => {
 
       // Get version info for notification
       const versionInfo = getVersionInfo(CURRENT_TERMS_VERSION);
-      const formattedDate = versionInfo ? formatVersionDate(versionInfo.date) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-      const description = versionInfo?.description || "Terms and Conditions have been updated";
+      const formattedDate = versionInfo
+        ? formatVersionDate(versionInfo.date)
+        : new Date().toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+      const description =
+        versionInfo?.description || "Terms and Conditions have been updated";
 
       // Create notification for the user
       const { error: notificationError } = await supabase

@@ -51,10 +51,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Navbar } from "@/components/Navbar";
 import { getAllSportsDbValues, toDisplaySportName } from "@/utils/sportsUtils";
 import { format } from "date-fns";
 import { useAuth } from "@/stores/authStore";
+import { Navbar } from "@/components/shared/nav/nav";
 
 interface Community {
   id: string;
@@ -1837,4 +1837,3 @@ export default function Community() {
     </div>
   );
 }
-

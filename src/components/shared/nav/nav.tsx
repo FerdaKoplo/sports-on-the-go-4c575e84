@@ -1,7 +1,19 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, User, Calendar, LogOut, Menu, X, MessageSquare, Trophy, Grid3x3, Users, Settings } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  MapPin,
+  User,
+  Calendar,
+  LogOut,
+  Menu,
+  X,
+  MessageSquare,
+  Trophy,
+  Grid3x3,
+  Users,
+  Settings,
+} from "lucide-react";
+import { useAuth } from "@/stores/authStore";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FriendRequestNotification } from "@/components/FriendRequestNotification";
 import { NotificationCenter } from "@/components/NotificationCenter";
@@ -22,11 +34,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { USER_NAV_LINK } from "@/constants/navigations/link.constant";
 
 export const Navbar = () => {
   const { user, signOut } = useAuth();
   const { pendingRequests } = useFriends();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -42,8 +55,8 @@ export const Navbar = () => {
 
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link 
-              to="/discover" 
+            <Link
+              to="/discover"
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-smooth font-medium"
             >
               <MapPin className="w-4 h-4" />
@@ -51,34 +64,16 @@ export const Navbar = () => {
             </Link>
             {user && (
               <>
-                <Link 
-                  to="/host-game" 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-smooth font-medium"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Host Game
-                </Link>
-                <Link 
-                  to="/community" 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-smooth font-medium"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Community
-                </Link>
-                <Link 
-                  to="/leaderboard" 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-smooth font-medium"
-                >
-                  <Trophy className="w-4 h-4" />
-                  Leaderboard
-                </Link>
-                <Link 
-                  to="/my-games" 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-smooth font-medium"
-                >
-                  <Grid3x3 className="w-4 h-4" />
-                  My Games
-                </Link>
+                {USER_NAV_LINK.map((navItem) => (
+                  <Link
+                    key={navItem.key}
+                    to={navItem.path}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-smooth font-medium"
+                  >
+                    <span>{navItem.icon}</span>
+                    {navItem.title}
+                  </Link>
+                ))}
               </>
             )}
           </div>
@@ -89,7 +84,7 @@ export const Navbar = () => {
             {user ? (
               <>
                 <NotificationCenter />
-                <Button 
+                <Button
                   size="sm"
                   className="gradient-primary text-white shadow-primary hover:opacity-90 transition-smooth"
                   asChild
@@ -110,7 +105,9 @@ export const Navbar = () => {
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">My Account</p>
+                        <p className="text-sm font-medium leading-none">
+                          My Account
+                        </p>
                         <p className="text-xs leading-none text-muted-foreground truncate">
                           {user.email}
                         </p>
@@ -124,10 +121,15 @@ export const Navbar = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/friends" className="cursor-pointer flex items-center">
+                      <Link
+                        to="/friends"
+                        className="cursor-pointer flex items-center"
+                      >
                         <Users className="w-4 h-4 mr-2" />
                         Friends
-                        <FriendRequestNotification count={pendingRequests.length} />
+                        <FriendRequestNotification
+                          count={pendingRequests.length}
+                        />
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -137,7 +139,10 @@ export const Navbar = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer text-destructive">
+                    <DropdownMenuItem
+                      onClick={() => signOut()}
+                      className="cursor-pointer text-destructive"
+                    >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
                     </DropdownMenuItem>
@@ -146,8 +151,8 @@ export const Navbar = () => {
               </>
             ) : (
               <>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   className="hidden sm:flex"
                   asChild
@@ -157,7 +162,7 @@ export const Navbar = () => {
                     Sign In
                   </Link>
                 </Button>
-                <Button 
+                <Button
                   size="sm"
                   className="gradient-primary text-white shadow-primary hover:opacity-90 transition-smooth"
                   asChild
@@ -190,75 +195,77 @@ export const Navbar = () => {
                     <span>SquadUp</span>
                   </SheetTitle>
                 </SheetHeader>
-                
+
                 <div className="flex flex-col space-y-4 mt-8">
                   {/* Mobile Navigation Links */}
-                  <Link 
-                    to="/discover" 
+                  <Link
+                    to="/discover"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
                   >
                     <MapPin className="w-5 h-5" />
                     <span className="font-medium">Discover Games</span>
                   </Link>
-                  
+
                   {user ? (
                     <>
-                      <Link 
-                        to="/host-game" 
+                      <Link
+                        to="/host-game"
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <Calendar className="w-5 h-5" />
                         <span className="font-medium">Host Game</span>
                       </Link>
-                      <Link 
-                        to="/community" 
+                      <Link
+                        to="/community"
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <MessageSquare className="w-5 h-5" />
                         <span className="font-medium">Community</span>
                       </Link>
-                      <Link 
-                        to="/leaderboard" 
+                      <Link
+                        to="/leaderboard"
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <Trophy className="w-5 h-5" />
                         <span className="font-medium">Leaderboard</span>
                       </Link>
-                      <Link 
-                        to="/my-games" 
+                      <Link
+                        to="/my-games"
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <Grid3x3 className="w-5 h-5" />
                         <span className="font-medium">My Games</span>
                       </Link>
-                      <Link 
-                        to="/friends" 
+                      <Link
+                        to="/friends"
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <Users className="w-5 h-5" />
                         <span className="font-medium">Friends</span>
-                        <FriendRequestNotification count={pendingRequests.length} />
+                        <FriendRequestNotification
+                          count={pendingRequests.length}
+                        />
                       </Link>
-                      <Link 
-                        to="/settings" 
+                      <Link
+                        to="/settings"
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <Settings className="w-5 h-5" />
                         <span className="font-medium">Settings</span>
                       </Link>
-                      
+
                       <div className="border-t pt-4 mt-4">
                         <div className="text-sm text-muted-foreground mb-3 px-3">
                           {user.email}
                         </div>
-                        <Button 
+                        <Button
                           onClick={() => {
                             signOut();
                             setMobileMenuOpen(false);
@@ -273,21 +280,23 @@ export const Navbar = () => {
                     </>
                   ) : (
                     <div className="space-y-3 pt-4">
-                      <Button 
-                        asChild
-                        variant="outline"
-                        className="w-full"
-                      >
-                        <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                      <Button asChild variant="outline" className="w-full">
+                        <Link
+                          to="/auth"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <User className="w-4 h-4 mr-2" />
                           Sign In
                         </Link>
                       </Button>
-                      <Button 
+                      <Button
                         asChild
                         className="w-full gradient-primary text-white"
                       >
-                        <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          to="/auth"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           Get Started
                         </Link>
                       </Button>

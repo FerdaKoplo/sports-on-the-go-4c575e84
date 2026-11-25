@@ -23,7 +23,7 @@ import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/stores/authStore";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/shared/nav/nav";
 import { getAllSportsDisplayNames, toDbSportValue } from "@/utils/sportsUtils";
 import { AlertTriangle } from "lucide-react";
 import { z } from "zod";

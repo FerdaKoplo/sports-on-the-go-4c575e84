@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Navbar } from "@/components/Navbar";
 import { SEO } from "@/components/SEO";
 import { GameReminderBanner } from "@/components/GameReminderBanner";
 import SportyChatBot from "@/components/SportyChatBot";
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/stores/authStore";
+import { Navbar } from "@/components/shared/nav/nav";
 
 const Index = () => {
   const { user } = useAuth();

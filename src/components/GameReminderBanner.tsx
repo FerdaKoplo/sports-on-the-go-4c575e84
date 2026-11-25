@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/stores/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -54,15 +54,16 @@ export const GameReminderBanner = () => {
     try {
       const now = new Date();
       const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      
+
       // Format dates for comparison using local timezone
-      const nowDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const next24Date = `${next24Hours.getFullYear()}-${String(next24Hours.getMonth() + 1).padStart(2, '0')}-${String(next24Hours.getDate()).padStart(2, '0')}`;
+      const nowDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const next24Date = `${next24Hours.getFullYear()}-${String(next24Hours.getMonth() + 1).padStart(2, "0")}-${String(next24Hours.getDate()).padStart(2, "0")}`;
 
       // Fetch games user is attending
       const { data: rsvpData, error: rsvpError } = await supabase
-        .from('rsvps')
-        .select(`
+        .from("rsvps")
+        .select(
+          `
           game_id,
           games (
             id,
@@ -77,23 +78,27 @@ export const GameReminderBanner = () => {
             host_id,
             status
           )
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'CONFIRMED');
+        `,
+        )
+        .eq("user_id", user.id)
+        .eq("status", "CONFIRMED");
 
       if (rsvpError) throw rsvpError;
 
       // Fetch games user is hosting
       const { data: hostData, error: hostError } = await supabase
-        .from('games')
-        .select('id, sport, custom_sport_name, custom_emoji, location_name, address, city, game_date, start_time, host_id, status')
-        .eq('host_id', user.id)
-        .eq('status', 'UPCOMING');
+        .from("games")
+        .select(
+          "id, sport, custom_sport_name, custom_emoji, location_name, address, city, game_date, start_time, host_id, status",
+        )
+        .eq("host_id", user.id)
+        .eq("status", "UPCOMING");
 
       if (hostError) throw hostError;
 
       // Combine all games
-      const attendingGames = rsvpData?.map(r => r.games).filter(Boolean) || [];
+      const attendingGames =
+        rsvpData?.map((r) => r.games).filter(Boolean) || [];
       const hostingGames = hostData || [];
       const allGames = [...attendingGames, ...hostingGames];
 
@@ -102,17 +107,19 @@ export const GameReminderBanner = () => {
         .filter((game: any) => {
           // Parse game date and time in local timezone
           const gameDateTime = new Date(`${game.game_date}T${game.start_time}`);
-          
+
           // Calculate hours until game
-          const hoursUntil = (gameDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-          
+          const hoursUntil =
+            (gameDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
           // Include games happening between now and next 24 hours
           return hoursUntil > 0 && hoursUntil <= 24;
         })
         .map((game: any) => {
           const gameDateTime = new Date(`${game.game_date}T${game.start_time}`);
-          const hoursUntil = (gameDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-          
+          const hoursUntil =
+            (gameDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
           return {
             id: game.id,
             sport: game.sport,
@@ -124,11 +131,14 @@ export const GameReminderBanner = () => {
             game_date: game.game_date,
             start_time: game.start_time,
             host_id: game.host_id,
-            hoursUntilGame: hoursUntil
+            hoursUntilGame: hoursUntil,
           };
         })
         .filter((game: UpcomingGame) => !dismissedGames.has(game.id))
-        .sort((a: UpcomingGame, b: UpcomingGame) => a.hoursUntilGame - b.hoursUntilGame);
+        .sort(
+          (a: UpcomingGame, b: UpcomingGame) =>
+            a.hoursUntilGame - b.hoursUntilGame,
+        );
 
       setUpcomingGames(gamesIn24Hours);
     } catch (error) {
@@ -139,21 +149,24 @@ export const GameReminderBanner = () => {
   const handleDismiss = (gameId: string) => {
     const newDismissed = new Set([...dismissedGames, gameId]);
     setDismissedGames(newDismissed);
-    
+
     // Save to localStorage
-    localStorage.setItem("dismissed_game_reminders", JSON.stringify([...newDismissed]));
-    
+    localStorage.setItem(
+      "dismissed_game_reminders",
+      JSON.stringify([...newDismissed]),
+    );
+
     // Remove from display
-    setUpcomingGames(prev => prev.filter(game => game.id !== gameId));
+    setUpcomingGames((prev) => prev.filter((game) => game.id !== gameId));
   };
 
   const formatTimeUntilGame = (hours: number) => {
     if (hours < 1) {
       const minutes = Math.round(hours * 60);
-      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
     }
     const roundedHours = Math.round(hours * 10) / 10;
-    return `${roundedHours} hour${roundedHours !== 1 ? 's' : ''}`;
+    return `${roundedHours} hour${roundedHours !== 1 ? "s" : ""}`;
   };
 
   if (!user || upcomingGames.length === 0) {
@@ -167,8 +180,8 @@ export const GameReminderBanner = () => {
         const gameDateTime = new Date(`${game.game_date}T${game.start_time}`);
 
         return (
-          <Alert 
-            key={game.id} 
+          <Alert
+            key={game.id}
             className="border-2 border-primary/50 bg-primary/5 shadow-lg relative"
           >
             <Button
@@ -190,16 +203,19 @@ export const GameReminderBanner = () => {
                   <Clock className="w-5 h-5 text-primary animate-pulse" />
                   {isHosting ? "Your Game Starts Soon!" : "Game Starting Soon!"}
                 </AlertTitle>
-                
+
                 <AlertDescription className="space-y-2">
                   <div className="font-semibold text-green-800">
-                    {toDisplaySportName(game.sport)} • {formatTimeUntilGame(game.hoursUntilGame)} away
+                    {toDisplaySportName(game.sport)} •{" "}
+                    {formatTimeUntilGame(game.hoursUntilGame)} away
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-green-700">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      <span>{format(gameDateTime, 'MMM dd, yyyy • h:mm a')}</span>
+                      <span>
+                        {format(gameDateTime, "MMM dd, yyyy • h:mm a")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/shared/nav/nav";
 import {
   toDisplaySportName,
   getSportEmoji,
