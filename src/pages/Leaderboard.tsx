@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { Trophy, Star, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/shared/nav/nav";
 
 interface LeaderboardEntry {
   id: string;

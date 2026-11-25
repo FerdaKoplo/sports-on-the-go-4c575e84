@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,15 +24,21 @@ export const UserSearchDialog = ({ trigger }: UserSearchDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<FriendProfile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [friendStatuses, setFriendStatuses] = useState<Record<string, string | null>>({});
-  const [sendingRequests, setSendingRequests] = useState<Set<string>>(new Set());
+  const [friendStatuses, setFriendStatuses] = useState<
+    Record<string, string | null>
+  >({});
+  const [sendingRequests, setSendingRequests] = useState<Set<string>>(
+    new Set(),
+  );
   const { sendFriendRequest, checkFriendshipStatus } = useFriends();
   const { toast } = useToast();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setCurrentUserId(user?.id || null);
     };
     getCurrentUser();
@@ -41,13 +53,19 @@ export const UserSearchDialog = ({ trigger }: UserSearchDialogProps) => {
     const searchUsers = async () => {
       setLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, username, first_name, last_name, profile_photo, overall_rating, games_hosted, games_attended")
-          .or(`username.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
+          .select(
+            "id, username, first_name, last_name, profile_photo, overall_rating, games_hosted, games_attended",
+          )
+          .or(
+            `username.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`,
+          )
           .neq("id", user.id)
           .limit(10);
 
@@ -170,11 +188,15 @@ export const UserSearchDialog = ({ trigger }: UserSearchDialogProps) => {
           </div>
 
           {loading && (
-            <p className="text-center text-muted-foreground py-4">Searching...</p>
+            <p className="text-center text-muted-foreground py-4">
+              Searching...
+            </p>
           )}
 
           {!loading && searchQuery && searchResults.length === 0 && (
-            <p className="text-center text-muted-foreground py-4">No users found</p>
+            <p className="text-center text-muted-foreground py-4">
+              No users found
+            </p>
           )}
 
           <div className="space-y-3">
@@ -183,7 +205,7 @@ export const UserSearchDialog = ({ trigger }: UserSearchDialogProps) => {
                 profile.username ||
                 `${profile.first_name || ""} ${profile.last_name || ""}`.trim() ||
                 "Anonymous User";
-              
+
               const status = friendStatuses[profile.id];
               const shouldFadeOut = status === "SENT" || status === "FRIENDS";
 
@@ -191,9 +213,9 @@ export const UserSearchDialog = ({ trigger }: UserSearchDialogProps) => {
                 <div
                   key={profile.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border bg-card transition-all duration-300 ${
-                    shouldFadeOut 
-                      ? 'opacity-0 scale-95 pointer-events-none' 
-                      : 'opacity-100 scale-100 hover:bg-accent'
+                    shouldFadeOut
+                      ? "opacity-0 scale-95 pointer-events-none"
+                      : "opacity-100 scale-100 hover:bg-accent"
                   }`}
                 >
                   <Avatar className="w-12 h-12">
@@ -206,7 +228,9 @@ export const UserSearchDialog = ({ trigger }: UserSearchDialogProps) => {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{displayName}</p>
                     {profile.username && (
-                      <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                      <p className="text-sm text-muted-foreground">
+                        @{profile.username}
+                      </p>
                     )}
                   </div>
 
