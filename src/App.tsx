@@ -4,28 +4,27 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { TermsVersionChecker } from "./components/TermsVersionChecker";
 import { useMobileViewport } from "./hooks/useMobileViewport";
 import { useScrollLockCleanup } from "./hooks/useScrollLockCleanup";
 
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import AuthCallback from "./pages/AuthCallback";
 import GoogleConsent from "./pages/GoogleConsent";
 import SetupUsername from "./pages/SetupUsername";
 import Discover from "./pages/Discover";
 import GameDetails from "./pages/GameDetails";
 import MyGames from "./pages/MyGames";
 import HostGame from "./pages/HostGame";
-import Community from "./pages/Community";
 import Leaderboard from "./pages/Leaderboard";
 import Friends from "./pages/Friends";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/auth/auth";
+import AuthCallback from "./pages/auth/auth-callback";
+import Community from "./pages/community/community";
 
 const queryClient = new QueryClient();
 
