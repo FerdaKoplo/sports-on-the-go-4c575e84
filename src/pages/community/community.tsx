@@ -9,7 +9,7 @@ import { CommunityItem } from "@/components/partials/community/community-types.p
 import { CommunityViewFactory } from "@/constants/factory/community/community-view-factory";
 import { ReviveCommunityDialog } from "@/components/partials/community/pages/revive-community-dialog";
 
-export default function Community() {
+const Community = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -129,4 +129,6 @@ export default function Community() {
       <ReviveCommunityDialog />
     </div>
   );
-}
+};
+
+export default Community;

@@ -12,7 +12,6 @@ import { useScrollLockCleanup } from "./hooks/useScrollLockCleanup";
 import Index from "./pages/Index";
 import GoogleConsent from "./pages/GoogleConsent";
 import SetupUsername from "./pages/SetupUsername";
-import Discover from "./pages/Discover";
 import GameDetails from "./pages/GameDetails";
 import MyGames from "./pages/MyGames";
 import HostGame from "./pages/HostGame";
@@ -25,6 +24,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/auth/auth";
 import AuthCallback from "./pages/auth/auth-callback";
 import Community from "./pages/community/community";
+import Discover from "./pages/information/discover";
 
 const queryClient = new QueryClient();
 
